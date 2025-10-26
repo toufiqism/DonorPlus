@@ -7,4 +7,6 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.57" apply false
     id("com.google.devtools.ksp") version "2.0.21-1.0.28"
     id("androidx.room") version "2.7.2" apply false
+    // Add the dependency for the Crashlytics Gradle plugin
+    id("com.google.firebase.crashlytics") version "3.0.6" apply false
 }
