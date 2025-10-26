@@ -6,6 +6,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("androidx.room")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -55,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.firebase.crashlytics.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -67,7 +69,7 @@ dependencies {
     implementation(libs.google.firebase.auth.ktx)
 
     // Add the dependencies for the Crashlytics NDK and Analytics libraries
-    implementation("com.google.firebase:firebase-analytics:23.0.0")
+    implementation(libs.firebase.analytics)
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
 
