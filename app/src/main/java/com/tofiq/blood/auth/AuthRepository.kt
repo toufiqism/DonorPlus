@@ -2,6 +2,8 @@ package com.tofiq.blood.auth
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface AuthRepository {
     suspend fun loginWithEmailPassword(email: String, password: String): Result<Unit>
@@ -10,8 +12,9 @@ interface AuthRepository {
     fun signOut()
 }
 
-class FirebaseAuthRepository(
-    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+@Singleton
+class FirebaseAuthRepository @Inject constructor(
+    private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
 
     override suspend fun loginWithEmailPassword(email: String, password: String): Result<Unit> =
@@ -28,9 +31,5 @@ class FirebaseAuthRepository(
 
     override fun isLoggedIn(): Boolean = firebaseAuth.currentUser != null
 
-    override fun signOut() {
-        firebaseAuth.signOut()
-    }
+    override fun signOut() = firebaseAuth.signOut()
 }
-
-

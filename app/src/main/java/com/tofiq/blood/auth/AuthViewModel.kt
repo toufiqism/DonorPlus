@@ -2,6 +2,8 @@ package com.tofiq.blood.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +17,9 @@ data class AuthUiState(
     val isLoggedIn: Boolean = false
 )
 
-class AuthViewModel(
-    private val repository: AuthRepository = FirebaseAuthRepository()
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val repository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState(isLoggedIn = repository.isLoggedIn()))
