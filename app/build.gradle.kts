@@ -67,7 +67,7 @@ dependencies {
     implementation(libs.google.firebase.auth.ktx)
 
     // Add the dependencies for the Crashlytics NDK and Analytics libraries
-    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-analytics:23.0.0")
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
 
@@ -102,4 +102,6 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.firebase.firestore.ktx)
+
+    implementation(libs.androidx.hilt.navigation.compose)
 }

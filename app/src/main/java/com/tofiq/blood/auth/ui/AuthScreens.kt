@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tofiq.blood.auth.AuthViewModel
 
@@ -25,7 +26,7 @@ import com.tofiq.blood.auth.AuthViewModel
 fun LoginScreen(
     onRegisterClick: () -> Unit,
     onLoggedIn: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -73,7 +74,7 @@ fun LoginScreen(
 fun RegisterScreen(
     onLoginClick: () -> Unit,
     onRegistered: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
