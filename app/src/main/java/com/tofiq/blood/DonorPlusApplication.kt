@@ -9,6 +9,6 @@ import dagger.hilt.android.HiltAndroidApp
 class DonorPlusApplication : Application(){
     override fun onCreate() {
         super.onCreate()
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
     }
 }

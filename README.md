@@ -1,23 +1,41 @@
-Donor Plus - Firebase Email/Password Auth (Compose)
+Donor Plus - Blood Donation Management App
 
-This app includes beautiful, animated Login and Registration screens using Firebase Authentication with modern Material Design 3.
+This app includes beautiful, animated Login screens with REST API authentication, configurable backend settings, and modern Material Design 3 UI components.
+
+## Authentication
+
+### REST API Login (Default)
+The app uses a REST API backend for authentication with phone number and password. The base URL is configurable through the Settings screen.
+
+**Default Base URL**: `http://192.168.103.177:8080`
+**Login Endpoint**: `/api/v1/auth/login`
+
+### Firebase Authentication (Alternative)
+Firebase authentication support is retained for backward compatibility. To switch to Firebase:
+- Modify `Module.kt` to bind `FirebaseAuthRepository` instead of `RestAuthRepository`
+- Enable Email/Password sign-in in Firebase Console → Authentication → Sign-in method
 
 ## Prerequisites
 - Android Studio Jellyfish or later
 - Java 11 toolchain
-- A Firebase project with an Android app registered for package `com.tofiq.blood`
-- Enable Email/Password sign-in in Firebase Console → Authentication → Sign-in method
+- A backend server running at the configured base URL (or use the settings screen to change it)
+- (Optional) A Firebase project if using Firebase authentication
 
 ## Setup
-1. Place your Firebase config at `app/google-services.json`.
-2. Ensure the `applicationId` matches the package name in your Firebase app (`com.tofiq.blood`).
-3. Sync Gradle. The project already applies the Google Services plugin and Firebase BOM.
+1. Launch the app and tap the Settings icon on the login screen
+2. Configure the base URL to point to your backend server
+3. Use phone number and password to login
+4. (Optional) Place your Firebase config at `app/google-services.json` if using Firebase
 
 ## Dependencies
-- Firebase BOM `com.google.firebase:firebase-bom`
-- Firebase Auth KTX `com.google.firebase:firebase-auth-ktx`
-- Jetpack Compose with Material Design 3
-- Hilt for Dependency Injection
+- **Retrofit** - REST API client
+- **OkHttp** - HTTP client with logging interceptor
+- **Gson** - JSON serialization/deserialization
+- **SharedPreferences** - Local storage for auth tokens and settings
+- **Firebase** (optional) - Alternative authentication backend
+- **Jetpack Compose** with Material Design 3
+- **Hilt** for Dependency Injection
+- **Room** for local database (prepared for future use)
 
 These are declared via `libs.versions.toml` and `app/build.gradle.kts`.
 
@@ -25,16 +43,46 @@ These are declared via `libs.versions.toml` and `app/build.gradle.kts`.
 
 ### Architecture
 - **MVVM Pattern**: Following best practices with ViewModel and Repository separation
+- **Repository Pattern**: Abstract repository interface with multiple implementations (REST API, Firebase)
 - **Dependency Injection**: Using Hilt for better testability and SOLID principles
 - **Unidirectional Data Flow**: State flows from ViewModel to UI components
-- **Single Source of Truth (SSOT)**: UI state managed centrally in AuthViewModel
+- **Single Source of Truth (SSOT)**: UI state managed centrally in ViewModels
+- **Clean Architecture**: Separation of concerns with data, domain, and presentation layers
 
 ### Key Components
-- `app/src/main/java/com/tofiq/blood/MainActivity.kt`: Initializes Firebase and sets Compose navigation with routes `login` and `register`.
-- `app/src/main/java/com/tofiq/blood/auth/AuthRepository.kt`: `FirebaseAuthRepository` implements login/registration via `FirebaseAuth`.
-- `app/src/main/java/com/tofiq/blood/auth/AuthViewModel.kt`: Holds UI state and exposes `login` and `register` actions.
-- `app/src/main/java/com/tofiq/blood/auth/ui/AuthScreens.kt`: Modern, animated `LoginScreen` and `RegisterScreen` Composables.
-- `app/src/main/java/com/tofiq/blood/ui/theme/`: Theme configuration with custom color schemes and typography.
+
+#### Authentication
+- `app/src/main/java/com/tofiq/blood/auth/AuthRepository.kt`: 
+  - `AuthRepository` interface defining authentication contract
+  - `RestAuthRepository` implementation for REST API login
+  - `FirebaseAuthRepository` implementation for Firebase authentication (backward compatibility)
+- `app/src/main/java/com/tofiq/blood/auth/AuthViewModel.kt`: Manages authentication UI state with phone number and password support
+- `app/src/main/java/com/tofiq/blood/auth/SettingsViewModel.kt`: Manages settings UI state for base URL configuration
+
+#### UI Screens
+- `app/src/main/java/com/tofiq/blood/auth/ui/AuthScreens.kt`: 
+  - `LoginScreen` with phone number input and settings button
+  - `RegisterScreen` for future registration implementation
+- `app/src/main/java/com/tofiq/blood/auth/ui/SettingsScreen.kt`: Configure backend base URL with validation
+
+#### Data Layer
+- `app/src/main/java/com/tofiq/blood/data/model/`:
+  - `LoginRequest.kt` - Request model with phoneNumber and password
+  - `LoginResponse.kt` - Response model with token and user info
+  - `AuthToken.kt` - Token storage model
+- `app/src/main/java/com/tofiq/blood/data/remote/AuthApiService.kt`: Retrofit API service interface
+- `app/src/main/java/com/tofiq/blood/data/local/PreferencesManager.kt`: SharedPreferences wrapper for secure storage
+
+#### Dependency Injection
+- `app/src/main/java/com/tofiq/blood/di/Module.kt`:
+  - `AuthRepositoryModule` - Provides AuthRepository implementation
+  - `NetworkModule` - Provides Retrofit, OkHttp, and API services
+  - `FirebaseModule` - Provides Firebase instances (optional)
+
+#### Navigation
+- `app/src/main/java/com/tofiq/blood/MainActivity.kt`: 
+  - Navigation setup with routes: `login`, `register`, `settings`
+  - Handles navigation state and back stack management
 
 ## UI/UX Features
 
@@ -92,13 +140,105 @@ This is an Android-only project. If you later create a Flutter version to suppor
 - Null safety throughout the codebase
 - Loading states prevent duplicate requests
 
+## API Integration
+
+### Login Request
+```json
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "phoneNumber": "1234567890",
+  "password": "your_password"
+}
+```
+
+### Success Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "refresh_token_here",
+    "userId": "user_id_here",
+    "phoneNumber": "1234567890"
+  }
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Invalid phone number or password",
+  "data": null
+}
+```
+
+## Configuration
+
+### Changing Base URL
+1. Open the app and tap the Settings icon (⚙️) on the login screen
+2. Enter the new base URL (e.g., `http://192.168.1.100:8080` or `https://api.yourserver.com`)
+3. Tap "Save Configuration"
+4. The app will immediately use the new URL for all API calls
+
+### Default Configuration
+- Base URL: `http://192.168.103.177:8080`
+- Connection Timeout: 30 seconds
+- Read/Write Timeout: 30 seconds
+- Logging: Enabled (Body-level logging for debugging)
+
 ## Troubleshooting
+
+### REST API Issues
+- **Login fails with network error**: 
+  - Verify the backend server is running at the configured URL
+  - Check if the device/emulator can reach the server (use ping or browser)
+  - Ensure the backend accepts requests from your device's IP
+  - Check the Logcat for detailed error messages (OkHttp logging is enabled)
+- **Base URL not saving**: 
+  - Ensure the URL format is correct (must start with http:// or https://)
+  - Check SharedPreferences permissions
+
+### Firebase Issues (if using Firebase)
 - If login/register fails immediately, confirm Email/Password provider is enabled in Firebase Console.
 - Ensure the SHA-1/256 fingerprints are added to Firebase if you use features requiring them (not required for basic email/password).
 - If `FirebaseApp.initializeApp(this)` fails, check the `google-services.json` placement under the `app/` module and re-sync Gradle.
+
+### UI Issues
 - If animations appear janky, ensure hardware acceleration is enabled on your device/emulator.
+- If the settings screen doesn't open, check navigation configuration in MainActivity.kt
 
 ## Recent Updates (October 2025)
+
+### REST API Login Implementation
+- ✅ Implemented REST API authentication with configurable base URL
+- ✅ Phone number and password login (replaced email login)
+- ✅ Secure token storage using SharedPreferences
+- ✅ Settings screen for configuring backend URL
+- ✅ Dynamic Retrofit instance with configurable base URL
+- ✅ Proper error handling and validation
+- ✅ Network logging for debugging
+- ✅ Backward compatibility with Firebase authentication
+
+### New Features
+- **Settings Screen**: 
+  - Configure backend base URL from the UI
+  - URL validation (protocol and format checking)
+  - Reset to default URL option
+  - Success/error feedback with animations
+- **Phone Number Login**:
+  - Updated login screen to use phone number instead of email
+  - Input validation for phone number and password
+  - Better error messages for network and API errors
+- **Token Management**:
+  - Secure storage of auth tokens and refresh tokens
+  - Automatic token retrieval on app restart
+  - Clean logout with token cleanup
 
 ### Login & Registration UI Overhaul
 - ✅ Implemented colorful, modern design with gradient backgrounds
@@ -109,6 +249,7 @@ This is an Android-only project. If you later create a Flutter version to suppor
 - ✅ Enhanced button designs with shadows and rounded corners
 - ✅ Better error message presentation
 - ✅ Responsive design for all screen sizes
+- ✅ Settings icon in top-right corner for easy access
 - ✅ Maintained existing functionality - no breaking changes
 
 ### Design Principles Applied
@@ -117,6 +258,7 @@ This is an Android-only project. If you later create a Flutter version to suppor
 - **SSOT**: Single source of truth for authentication state
 - **Proper Error Handling**: All error cases handled gracefully
 - **Null Safety**: Comprehensive null checking throughout
+- **Clean Architecture**: Clear separation between data, domain, and presentation layers
 
 ## Design System
 
@@ -179,12 +321,35 @@ When building new features, follow these principles:
 5. **Handle states** - Show loading, error, and success states properly
 6. **Test responsively** - Ensure it works on all screen sizes
 
+## Security Considerations
+
+### Current Implementation
+- Auth tokens stored in SharedPreferences (encrypted by Android system)
+- HTTPS should be used for production base URLs
+- Phone numbers and passwords validated before sending to API
+- Network logging should be disabled in production builds
+
+### Recommendations for Production
+1. **Use HTTPS**: Always use HTTPS for API communication
+2. **Encrypt SharedPreferences**: Consider using EncryptedSharedPreferences for sensitive data
+3. **Implement Token Refresh**: Add automatic token refresh logic
+4. **Add Certificate Pinning**: Pin SSL certificates for additional security
+5. **Obfuscate Code**: Enable ProGuard/R8 for release builds
+6. **Disable Logging**: Set logging level to NONE in production
+
 ## Future Improvements
-- Add form validation and password strength indicator
-- Implement email verification flow
-- Add password reset functionality
+- ✅ ~~Implement REST API login with phone number~~ (Completed)
+- ✅ ~~Add configurable base URL settings~~ (Completed)
+- Add phone number format validation with country code support
+- Implement registration endpoint integration
+- Add password reset functionality via SMS/OTP
+- Implement token refresh mechanism
 - Add a Home screen and route after authentication
 - Implement biometric authentication option
-- Add remember me functionality
+- Add remember me functionality with encrypted storage
 - Implement social login options (Google, Facebook)
+- Add offline mode with local data caching
+- Implement form validation and password strength indicator
+- Add OTP verification for phone numbers
+- Multi-factor authentication (MFA) support
 

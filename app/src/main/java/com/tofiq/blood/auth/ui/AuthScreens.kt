@@ -32,6 +32,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -85,6 +87,7 @@ import kotlinx.coroutines.delay
 fun LoginScreen(
     onRegisterClick: () -> Unit,
     onLoggedIn: () -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -216,15 +219,15 @@ fun LoginScreen(
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Email Field
+                        // Phone Number Field
                         OutlinedTextField(
-                            value = uiState.email,
-                            onValueChange = viewModel::updateEmail,
-                            label = { Text("Email Address") },
+                            value = uiState.phoneNumber,
+                            onValueChange = viewModel::updatePhoneNumber,
+                            label = { Text("Phone Number") },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Email,
-                                    contentDescription = "Email",
+                                    imageVector = Icons.Default.Phone,
+                                    contentDescription = "Phone",
                                     tint = SecondaryBlue
                                 )
                             },
@@ -291,7 +294,7 @@ fun LoginScreen(
                             )
                         } else {
                             Button(
-                                onClick = { viewModel.login(onLoggedIn) },
+                                onClick = { viewModel.loginWithPhone(onLoggedIn) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp)
@@ -361,6 +364,21 @@ fun LoginScreen(
                     )
                 }
             }
+        }
+        
+        // Settings Button (Top Right) - Rendered on top
+        IconButton(
+            onClick = onSettingsClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tofiq.blood.auth.ui.LoginScreen
 import com.tofiq.blood.auth.ui.RegisterScreen
+import com.tofiq.blood.auth.ui.SettingsScreen
 import com.tofiq.blood.ui.theme.DonorPlusTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -45,13 +46,19 @@ fun DonorPlusApp(modifier: Modifier = Modifier) {
         composable("login") {
             LoginScreen(
                 onRegisterClick = { navController.navigate("register") },
-                onLoggedIn = { /* TODO: navigate to home when available */ }
+                onLoggedIn = { /* TODO: navigate to home when available */ },
+                onSettingsClick = { navController.navigate("settings") }
             )
         }
         composable("register") {
             RegisterScreen(
                 onLoginClick = { navController.popBackStack() },
                 onRegistered = { navController.popBackStack() }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
