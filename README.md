@@ -10,6 +10,21 @@ The app uses a REST API backend for authentication with phone number and passwor
 **Default Base URL**: `http://192.168.103.177:8080`
 **Login Endpoint**: `/api/v1/auth/login`
 
+### REST API Registration
+The app includes a comprehensive registration feature that allows users to create accounts with all required information.
+
+**Registration Endpoint**: `/api/v1/auth/register`
+
+**Registration Fields**:
+- **Phone Number** (Required): Must match pattern `^\\+?[0-9]{10,15}$`
+- **Password** (Required): Minimum 8 characters
+- **Full Name** (Required): User's full name
+- **Role** (Required): Either `DONOR` or `REQUESTER`
+- **Blood Group** (Required): One of the 8 blood types (A_POSITIVE, A_NEGATIVE, B_POSITIVE, B_NEGATIVE, AB_POSITIVE, AB_NEGATIVE, O_POSITIVE, O_NEGATIVE)
+- **Agreed to Terms** (Required): User must agree to terms and conditions
+- **Last Donation Date** (Optional): Only shown for donors, ISO date format
+- **Latitude/Longitude** (Optional): Location coordinates if user chooses to share location
+
 ### Firebase Authentication (Alternative)
 Firebase authentication support is retained for backward compatibility. To switch to Firebase:
 - Modify `Module.kt` to bind `FirebaseAuthRepository` instead of `RestAuthRepository`
@@ -24,8 +39,18 @@ Firebase authentication support is retained for backward compatibility. To switc
 ## Setup
 1. Launch the app and tap the Settings icon on the login screen
 2. Configure the base URL to point to your backend server
-3. Use phone number and password to login
-4. (Optional) Place your Firebase config at `app/google-services.json` if using Firebase
+3. For new users: Tap "Sign Up" on the login screen to register
+4. Fill in all required registration fields:
+   - Phone number (10-15 digits, optional + prefix)
+   - Password (minimum 8 characters)
+   - Full name
+   - Select role (DONOR or REQUESTER)
+   - Select blood group
+   - Agree to terms and conditions
+   - (Optional for donors) Select last donation date
+5. Tap "Create Account" to register
+6. Use phone number and password to login
+7. (Optional) Place your Firebase config at `app/google-services.json` if using Firebase
 
 ## Dependencies
 - **Retrofit** - REST API client
@@ -54,23 +79,38 @@ These are declared via `libs.versions.toml` and `app/build.gradle.kts`.
 #### Authentication
 - `app/src/main/java/com/tofiq/blood/auth/AuthRepository.kt`: 
   - `AuthRepository` interface defining authentication contract
-  - `RestAuthRepository` implementation for REST API login
+  - `RestAuthRepository` implementation for REST API login and registration
   - `FirebaseAuthRepository` implementation for Firebase authentication (backward compatibility)
-- `app/src/main/java/com/tofiq/blood/auth/AuthViewModel.kt`: Manages authentication UI state with phone number and password support
+- `app/src/main/java/com/tofiq/blood/auth/AuthViewModel.kt`: 
+  - Manages authentication UI state with phone number and password support
+  - Handles registration with all required fields
+  - Validates phone number format, password length, and required fields
+  - Manages role selection, blood group selection, and terms agreement
 - `app/src/main/java/com/tofiq/blood/auth/SettingsViewModel.kt`: Manages settings UI state for base URL configuration
 
 #### UI Screens
 - `app/src/main/java/com/tofiq/blood/auth/ui/AuthScreens.kt`: 
   - `LoginScreen` with phone number input and settings button
-  - `RegisterScreen` for future registration implementation
+  - `RegisterScreen` with comprehensive registration form including:
+    - Phone number and password fields
+    - Full name input
+    - Role selection (DONOR/REQUESTER)
+    - Blood group dropdown
+    - Terms and conditions checkbox
+    - Optional last donation date picker (for donors)
+    - Date picker dialog for selecting donation dates
 - `app/src/main/java/com/tofiq/blood/auth/ui/SettingsScreen.kt`: Configure backend base URL with validation
 
 #### Data Layer
 - `app/src/main/java/com/tofiq/blood/data/model/`:
   - `LoginRequest.kt` - Request model with phoneNumber and password
   - `LoginResponse.kt` - Response model with token and user info
+  - `RegisterRequest.kt` - Request model with all registration fields
+  - `RegisterResponse.kt` - Response model with token and user info after registration
+  - `UserRole.kt` - Enum for user roles (DONOR, REQUESTER)
+  - `BloodGroup.kt` - Enum for blood groups (8 types)
   - `AuthToken.kt` - Token storage model
-- `app/src/main/java/com/tofiq/blood/data/remote/AuthApiService.kt`: Retrofit API service interface
+- `app/src/main/java/com/tofiq/blood/data/remote/AuthApiService.kt`: Retrofit API service interface with login and register endpoints
 - `app/src/main/java/com/tofiq/blood/data/local/PreferencesManager.kt`: SharedPreferences wrapper for secure storage
 
 #### Dependency Injection
@@ -153,17 +193,41 @@ Content-Type: application/json
 }
 ```
 
+### Registration Request
+```json
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "phoneNumber": "+1234567890",
+  "password": "secure_password123",
+  "fullName": "John Doe",
+  "role": "DONOR",
+  "agreedToTerms": true,
+  "bloodGroup": "O_POSITIVE",
+  "lastDonationDate": "2025-01-20",
+  "latitude": 40.7128,
+  "longitude": -74.0060
+}
+```
+
+**Note**: 
+- `lastDonationDate` is optional and only applicable for DONOR role
+- `latitude` and `longitude` are optional
+- `role` must be either "DONOR" or "REQUESTER"
+- `bloodGroup` must be one of: A_POSITIVE, A_NEGATIVE, B_POSITIVE, B_NEGATIVE, AB_POSITIVE, AB_NEGATIVE, O_POSITIVE, O_NEGATIVE
+
 ### Success Response
 ```json
 {
   "success": true,
   "statusCode": 200,
-  "message": "Login successful",
+  "message": "Registration successful",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "refreshToken": "refresh_token_here",
     "userId": "user_id_here",
-    "phoneNumber": "1234567890"
+    "phoneNumber": "+1234567890"
   }
 }
 ```
@@ -235,6 +299,16 @@ Content-Type: application/json
   - Updated login screen to use phone number instead of email
   - Input validation for phone number and password
   - Better error messages for network and API errors
+- **Registration Feature**:
+  - Complete registration form with all required fields
+  - Role selection (DONOR/REQUESTER) with dropdown menu
+  - Blood group selection with all 8 types
+  - Terms and conditions checkbox
+  - Date picker for last donation date (donors only)
+  - Client-side validation for all fields
+  - Phone number format validation (10-15 digits)
+  - Password length validation (minimum 8 characters)
+  - Error handling for registration failures
 - **Token Management**:
   - Secure storage of auth tokens and refresh tokens
   - Automatic token retrieval on app restart
@@ -340,8 +414,9 @@ When building new features, follow these principles:
 ## Future Improvements
 - ✅ ~~Implement REST API login with phone number~~ (Completed)
 - ✅ ~~Add configurable base URL settings~~ (Completed)
+- ✅ ~~Implement registration endpoint integration~~ (Completed)
 - Add phone number format validation with country code support
-- Implement registration endpoint integration
+- Add location picker with map integration for optional location sharing
 - Add password reset functionality via SMS/OTP
 - Implement token refresh mechanism
 - Add a Home screen and route after authentication

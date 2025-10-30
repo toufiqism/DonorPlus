@@ -4,11 +4,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tofiq.blood.data.local.PreferencesManager
 import com.tofiq.blood.data.model.AuthToken
 import com.tofiq.blood.data.model.LoginRequest
+import com.tofiq.blood.data.model.RegisterRequest
+import com.tofiq.blood.data.model.RegisterResponse
 import com.tofiq.blood.data.remote.AuthApiService
 import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
+
+import com.tofiq.blood.data.model.BloodGroup
+import com.tofiq.blood.data.model.UserRole
+import java.time.LocalDate
 
 /**
  * Repository interface for authentication operations
@@ -17,6 +23,17 @@ interface AuthRepository {
     suspend fun loginWithPhonePassword(phoneNumber: String, password: String): Result<Unit>
     suspend fun loginWithEmailPassword(email: String, password: String): Result<Unit>
     suspend fun registerWithEmailPassword(email: String, password: String): Result<Unit>
+    suspend fun register(
+        phoneNumber: String,
+        password: String,
+        fullName: String,
+        role: UserRole,
+        agreedToTerms: Boolean,
+        bloodGroup: BloodGroup,
+        lastDonationDate: LocalDate? = null,
+        latitude: Double? = null,
+        longitude: Double? = null
+    ): Result<Unit>
     fun isLoggedIn(): Boolean
     fun signOut()
 }
@@ -93,6 +110,72 @@ class RestAuthRepository @Inject constructor(
         Result.failure(UnsupportedOperationException("Registration not supported with REST API"))
 
     /**
+     * Register a new user with REST API
+     */
+    override suspend fun register(
+        phoneNumber: String,
+        password: String,
+        fullName: String,
+        role: UserRole,
+        agreedToTerms: Boolean,
+        bloodGroup: BloodGroup,
+        lastDonationDate: LocalDate?,
+        latitude: Double?,
+        longitude: Double?
+    ): Result<Unit> = runCatching {
+        val registerRequest = RegisterRequest(
+            phoneNumber = phoneNumber.trim(),
+            password = password,
+            fullName = fullName.trim(),
+            role = role,
+            agreedToTerms = agreedToTerms,
+            bloodGroup = bloodGroup,
+            lastDonationDate = lastDonationDate?.toString(), // Convert LocalDate to ISO string
+            latitude = latitude,
+            longitude = longitude
+        )
+
+        val response = authApiService.register(registerRequest)
+
+        if (response.isSuccessful) {
+            val registerResponse = response.body()
+
+            // Check if the API call was successful
+            if (registerResponse != null) {
+                if (registerResponse.success && registerResponse.data?.accessToken != null) {
+                    // Success - save auth token
+                    // Use phoneNumber from request if not provided in response
+                    val authToken = AuthToken(
+                        token = registerResponse.data.accessToken,
+                        refreshToken = registerResponse.data.refreshToken,
+                        userId = registerResponse.data.userId,
+                        phoneNumber = registerResponse.data.phoneNumber ?: phoneNumber.trim()
+                    )
+                    preferencesManager.saveAuthToken(authToken)
+                    Unit
+                } else {
+                    // API returned success=false or missing token
+                    throw Exception(registerResponse.message ?: "Registration failed")
+                }
+            } else {
+                throw Exception("Registration failed: No response received")
+            }
+        } else {
+            // HTTP error - try to parse error body
+            val errorBody = response.errorBody()?.string()
+            val errorMessage = errorBody?.let {
+                try {
+                    val errorJson = JSONObject(it)
+                    errorJson.optString("message", "Unknown error")
+                } catch (e: Exception) {
+                    "Unknown error"
+                }
+            } ?: "Unknown error"
+            throw Exception("Registration failed: ${response.code()} - $errorMessage")
+        }
+    }
+
+    /**
      * Check if user is logged in
      */
     override fun isLoggedIn(): Boolean = preferencesManager.isLoggedIn()
@@ -127,6 +210,19 @@ class FirebaseAuthRepository @Inject constructor(
             firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
             Unit
         }
+
+    override suspend fun register(
+        phoneNumber: String,
+        password: String,
+        fullName: String,
+        role: UserRole,
+        agreedToTerms: Boolean,
+        bloodGroup: BloodGroup,
+        lastDonationDate: LocalDate?,
+        latitude: Double?,
+        longitude: Double?
+    ): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Registration with REST API fields not supported with Firebase"))
 
     override fun isLoggedIn(): Boolean = firebaseAuth.currentUser != null
 

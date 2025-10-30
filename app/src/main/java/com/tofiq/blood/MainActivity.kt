@@ -53,7 +53,14 @@ fun DonorPlusApp(modifier: Modifier = Modifier) {
         composable("register") {
             RegisterScreen(
                 onLoginClick = { navController.popBackStack() },
-                onRegistered = { navController.popBackStack() }
+                onRegistered = { 
+                    // Navigate back to login screen after successful registration
+                    // Clear back stack and navigate to login
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         composable("settings") {
