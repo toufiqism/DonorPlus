@@ -1,9 +1,9 @@
 package com.tofiq.blood.dashboard
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -19,7 +19,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,16 +30,27 @@ import com.tofiq.blood.dashboard.screens.ProfileScreen
 import com.tofiq.blood.dashboard.screens.SearchScreen
 import com.tofiq.blood.ui.theme.PrimaryRed
 import com.tofiq.blood.ui.theme.SecondaryBlue
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * Bottom navigation item data class
+ * Immutable bottom navigation item data class
  */
+@Immutable
 data class BottomNavItem(
     val index: Int,
     val title: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
+)
+
+/**
+ * Static navigation items - defined outside composable for stability
+ */
+private val bottomNavItems = listOf(
+    BottomNavItem(0, "Home", Icons.Filled.Home, Icons.Outlined.Home),
+    BottomNavItem(1, "Search", Icons.Filled.Search, Icons.Outlined.Search),
+    BottomNavItem(2, "Profile", Icons.Filled.Person, Icons.Outlined.Person)
 )
 
 /**
@@ -51,77 +63,82 @@ fun DashboardScreen(
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { 3 })
 
-    // Define bottom navigation items
-    val bottomNavItems = listOf(
-        BottomNavItem(
-            index = 0,
-            title = "Home",
-            selectedIcon = Icons.Filled.Home,
-            unselectedIcon = Icons.Outlined.Home
-        ),
-        BottomNavItem(
-            index = 1,
-            title = "Search",
-            selectedIcon = Icons.Filled.Search,
-            unselectedIcon = Icons.Outlined.Search
-        ),
-        BottomNavItem(
-            index = 2,
-            title = "Profile",
-            selectedIcon = Icons.Filled.Person,
-            unselectedIcon = Icons.Outlined.Person
-        )
-    )
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                contentColor = PrimaryRed
-            ) {
-                bottomNavItems.forEach { item ->
-                    val isSelected = pagerState.currentPage == item.index
-
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.title
-                            )
-                        },
-                        label = { Text(item.title) },
-                        selected = isSelected,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(item.index)
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryRed,
-                            selectedTextColor = PrimaryRed,
-                            unselectedIconColor = SecondaryBlue.copy(alpha = 0.6f),
-                            unselectedTextColor = SecondaryBlue.copy(alpha = 0.6f),
-                            indicatorColor = PrimaryRed.copy(alpha = 0.1f)
-                        )
-                    )
-                }
-            }
+            DashboardBottomBar(
+                pagerState = pagerState,
+                scope = scope
+            )
         }
     ) { innerPadding ->
-        HorizontalPager(
-            state = pagerState,
+        DashboardPager(
+            pagerState = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            beyondViewportPageCount = 0,
-            userScrollEnabled = true
-        ) { page ->
-            when (page) {
-                0 -> HomeScreen()
-                1 -> SearchScreen()
-                2 -> ProfileScreen()
-            }
+                .padding(innerPadding)
+        )
+    }
+}
+
+/**
+ * Bottom navigation bar - extracted for recomposition optimization
+ */
+@Composable
+private fun DashboardBottomBar(
+    pagerState: PagerState,
+    scope: CoroutineScope
+) {
+    NavigationBar(
+        containerColor = Color.White,
+        contentColor = PrimaryRed
+    ) {
+        bottomNavItems.forEach { item ->
+            val isSelected = pagerState.currentPage == item.index
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.title
+                    )
+                },
+                label = { Text(item.title) },
+                selected = isSelected,
+                onClick = {
+                    scope.launch {
+                        pagerState.animateScrollToPage(item.index)
+                    }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryRed,
+                    selectedTextColor = PrimaryRed,
+                    unselectedIconColor = SecondaryBlue.copy(alpha = 0.6f),
+                    unselectedTextColor = SecondaryBlue.copy(alpha = 0.6f),
+                    indicatorColor = PrimaryRed.copy(alpha = 0.1f)
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Horizontal pager for screen content - extracted for recomposition optimization
+ */
+@Composable
+private fun DashboardPager(
+    pagerState: PagerState,
+    modifier: Modifier = Modifier
+) {
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier,
+        beyondViewportPageCount = 0,
+        userScrollEnabled = true
+    ) { page ->
+        when (page) {
+            0 -> HomeScreen()
+            1 -> SearchScreen()
+            2 -> ProfileScreen()
         }
     }
 }

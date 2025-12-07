@@ -55,7 +55,7 @@ fun DonorPlusApp() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "dashboard"
+        startDestination = "login"
     ) {
         composable("login") {
             LoginScreen(

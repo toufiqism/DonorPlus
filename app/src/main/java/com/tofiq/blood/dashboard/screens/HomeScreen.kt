@@ -1,12 +1,10 @@
 package com.tofiq.blood.dashboard.screens
 
+import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -15,19 +13,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.tofiq.blood.dashboard.components.ActivityCard
+import com.tofiq.blood.dashboard.components.ActivityData
+import com.tofiq.blood.dashboard.components.StatData
+import com.tofiq.blood.dashboard.components.StatsRow
+import com.tofiq.blood.dashboard.components.WelcomeCard
 import com.tofiq.blood.ui.components.DonorPlusCard
 import com.tofiq.blood.ui.components.DonorPlusPrimaryButton
 import com.tofiq.blood.ui.components.DonorPlusSectionHeader
@@ -40,18 +37,46 @@ import com.tofiq.blood.ui.theme.SuccessGreen
 import com.tofiq.blood.ui.theme.TextSecondary
 
 /**
+ * Stable state holder for HomeScreen to prevent unnecessary recompositions
+ */
+@Stable
+class HomeScreenState(
+    private val context: Context
+) {
+    val statsRow1 = listOf(
+        StatData(Icons.Default.Favorite, "12", "Donations", PrimaryRed),
+        StatData(Icons.Default.People, "36", "Lives Saved", SuccessGreen)
+    )
+    
+    val statsRow2 = listOf(
+        StatData(Icons.Default.LocalHospital, "A+", "Blood Type", SecondaryBlue),
+        StatData(Icons.Default.Favorite, "45", "Days Until", AccentCoral)
+    )
+    
+    val recentActivities = listOf(
+        ActivityData("Blood Donation", "Dec 1, 2025", "City Hospital"),
+        ActivityData("Blood Donation", "Oct 15, 2025", "Community Center")
+    )
+    
+    fun showFeatureToast() {
+        Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@Composable
+fun rememberHomeScreenState(): HomeScreenState {
+    val context = LocalContext.current
+    return remember { HomeScreenState(context) }
+}
+
+/**
  * Home screen - Dashboard overview
  */
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val showFeatureToast = remember {
-        {
-            Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
-        }
-    }
+    val state = rememberHomeScreenState()
     
     DonorPlusSolidBackground {
         Column(
@@ -59,50 +84,25 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Welcome Header Card
-            WelcomeHeader()
-            
-            // Stats Section
-            StatsSection()
-            
-            // Quick Actions Section
-            QuickActionsSection(onBookDonation = showFeatureToast)
-            
-            // Recent Activity Section
-            RecentActivitySection()
+            HomeWelcomeSection()
+            HomeStatsSection(state)
+            HomeQuickActionsSection(onBookDonation = state::showFeatureToast)
+            HomeRecentActivitySection(state)
         }
     }
 }
 
 @Composable
-private fun WelcomeHeader() {
-    DonorPlusCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(DonorPlusSpacing.M),
-        backgroundColor = PrimaryRed
-    ) {
-        Column(
-            modifier = Modifier.padding(DonorPlusSpacing.L)
-        ) {
-            Text(
-                text = "Welcome Back!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
-            Text(
-                text = "Ready to save lives today?",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.9f)
-            )
-        }
-    }
+private fun HomeWelcomeSection() {
+    WelcomeCard(
+        title = "Welcome Back!",
+        subtitle = "Ready to save lives today?",
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    )
 }
 
 @Composable
-private fun StatsSection() {
+private fun HomeStatsSection(state: HomeScreenState) {
     Column(
         modifier = Modifier.padding(DonorPlusSpacing.M)
     ) {
@@ -110,52 +110,22 @@ private fun StatsSection() {
         
         Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
-        ) {
-            StatCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Favorite,
-                value = "12",
-                label = "Donations",
-                color = PrimaryRed
-            )
-            StatCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.People,
-                value = "36",
-                label = "Lives Saved",
-                color = SuccessGreen
-            )
-        }
+        StatsRow(
+            leftStat = state.statsRow1[0],
+            rightStat = state.statsRow1[1]
+        )
         
         Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
-        ) {
-            StatCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.LocalHospital,
-                value = "A+",
-                label = "Blood Type",
-                color = SecondaryBlue
-            )
-            StatCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Favorite,
-                value = "45",
-                label = "Days Until",
-                color = AccentCoral
-            )
-        }
+        StatsRow(
+            leftStat = state.statsRow2[0],
+            rightStat = state.statsRow2[1]
+        )
     }
 }
 
 @Composable
-private fun QuickActionsSection(onBookDonation: () -> Unit) {
+private fun HomeQuickActionsSection(onBookDonation: () -> Unit) {
     Column(
         modifier = Modifier.padding(DonorPlusSpacing.M)
     ) {
@@ -186,7 +156,7 @@ private fun QuickActionsSection(onBookDonation: () -> Unit) {
 }
 
 @Composable
-private fun RecentActivitySection() {
+private fun HomeRecentActivitySection(state: HomeScreenState) {
     Column(
         modifier = Modifier.padding(DonorPlusSpacing.M)
     ) {
@@ -194,102 +164,10 @@ private fun RecentActivitySection() {
         
         Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
         
-        ActivityCard(
-            title = "Blood Donation",
-            date = "Dec 1, 2025",
-            location = "City Hospital"
-        )
-        
-        Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
-        
-        ActivityCard(
-            title = "Blood Donation",
-            date = "Oct 15, 2025",
-            location = "Community Center"
-        )
-    }
-}
-
-/**
- * Stat card component for displaying statistics
- */
-@Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    value: String,
-    label: String,
-    color: Color
-) {
-    DonorPlusCard(
-        modifier = modifier,
-        elevation = 8.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(DonorPlusSpacing.M),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = color,
-                modifier = Modifier.height(32.dp)
-            )
-            Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-                color = color
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
-        }
-    }
-}
-
-/**
- * Activity card component for displaying recent activities
- */
-@Composable
-private fun ActivityCard(
-    title: String,
-    date: String,
-    location: String
-) {
-    DonorPlusCard(
-        elevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(DonorPlusSpacing.M),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Favorite,
-                contentDescription = null,
-                tint = PrimaryRed,
-                modifier = Modifier.height(24.dp)
-            )
-            Spacer(modifier = Modifier.padding(DonorPlusSpacing.S))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "$date • $location",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
+        state.recentActivities.forEachIndexed { index, activity ->
+            ActivityCard(data = activity)
+            if (index < state.recentActivities.lastIndex) {
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
             }
         }
     }

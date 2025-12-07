@@ -4,9 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,271 +71,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryRed,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(GradientStart, GradientMiddle, GradientEnd),
-                        start = Offset(0f, 0f),
-                        end = Offset(1000f, 1000f)
-                    )
-                )
-                .padding(paddingValues)
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Settings Icon
-            Card(
-                modifier = Modifier
-                    .size(80.dp)
-                    .shadow(8.dp, RoundedCornerShape(40.dp)),
-                shape = RoundedCornerShape(40.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = SecondaryBlue
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    tint = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "API Configuration",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = PrimaryRed
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Configure the backend server URL",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Settings Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(16.dp, RoundedCornerShape(24.dp)),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Base URL Field
-                    OutlinedTextField(
-                        value = uiState.baseUrl,
-                        onValueChange = viewModel::updateBaseUrl,
-                        label = { Text("Base URL") },
-                        placeholder = { Text("http://192.168.103.177:8080") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SecondaryBlue,
-                            unfocusedBorderColor = Color(0xFFE0E0E0),
-                            focusedLabelColor = SecondaryBlue
-                        ),
-                        singleLine = true,
-                        supportingText = {
-                            Text(
-                                text = "Format: http://ip:port or https://domain.com",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Save Button
-                    Button(
-                        onClick = { viewModel.saveBaseUrl() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .shadow(8.dp, RoundedCornerShape(28.dp)),
-                        shape = RoundedCornerShape(28.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SecondaryBlue
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Save Configuration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Reset Button
-                    TextButton(
-                        onClick = { viewModel.resetToDefault() },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = PrimaryRed
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Reset to Default",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
-
-                    // Success message
-                    AnimatedVisibility(
-                        visible = uiState.isSaved,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
-                            )
-                        ) {
-                            Text(
-                                text = "✓ Configuration saved successfully",
-                                color = Color(0xFF2E7D32),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-
-                    // Error message
-                    uiState.errorMessage?.let { msg ->
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
-                            )
-                        ) {
-                            Text(
-                                text = msg,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Info Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = AccentCoral.copy(alpha = 0.1f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "ℹ️ Information",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = PrimaryRed
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "• The base URL should point to your backend server\n" +
-                                "• Include the protocol (http:// or https://)\n" +
-                                "• Include the port number if required\n" +
-                                "• Changes take effect immediately",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
-            }
-        }
-    }
-
     // Auto-hide success message after 3 seconds
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
@@ -345,5 +78,342 @@ fun SettingsScreen(
             viewModel.clearSavedMessage()
         }
     }
+
+    Scaffold(
+        topBar = {
+            SettingsTopBar(onNavigateBack = onNavigateBack)
+        }
+    ) { paddingValues ->
+        SettingsContent(
+            baseUrl = uiState.baseUrl,
+            onBaseUrlChange = viewModel::updateBaseUrl,
+            onSave = viewModel::saveBaseUrl,
+            onReset = viewModel::resetToDefault,
+            isSaved = uiState.isSaved,
+            errorMessage = uiState.errorMessage,
+            modifier = Modifier.padding(paddingValues)
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsTopBar(
+    onNavigateBack: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = PrimaryRed,
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White
+        )
+    )
+}
+
+@Composable
+private fun SettingsContent(
+    baseUrl: String,
+    onBaseUrlChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onReset: () -> Unit,
+    isSaved: Boolean,
+    errorMessage: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(GradientStart, GradientMiddle, GradientEnd),
+                    start = Offset(0f, 0f),
+                    end = Offset(1000f, 1000f)
+                )
+            )
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        SettingsIcon()
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        SettingsHeader()
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        SettingsCard(
+            baseUrl = baseUrl,
+            onBaseUrlChange = onBaseUrlChange,
+            onSave = onSave,
+            onReset = onReset,
+            isSaved = isSaved,
+            errorMessage = errorMessage
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        SettingsInfoCard()
+    }
+}
+
+@Composable
+private fun SettingsIcon() {
+    Card(
+        modifier = Modifier
+            .size(80.dp)
+            .shadow(8.dp, RoundedCornerShape(40.dp)),
+        shape = RoundedCornerShape(40.dp),
+        colors = CardDefaults.cardColors(containerColor = SecondaryBlue)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Settings,
+            contentDescription = "Settings",
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            tint = Color.White
+        )
+    }
+}
+
+@Composable
+private fun SettingsHeader() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "API Configuration",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryRed
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Configure the backend server URL",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun SettingsCard(
+    baseUrl: String,
+    onBaseUrlChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onReset: () -> Unit,
+    isSaved: Boolean,
+    errorMessage: String?
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(16.dp, RoundedCornerShape(24.dp)),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            BaseUrlField(
+                value = baseUrl,
+                onValueChange = onBaseUrlChange
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            SaveButton(onClick = onSave)
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            ResetButton(onClick = onReset)
+            
+            SuccessMessage(visible = isSaved)
+            
+            errorMessage?.let { msg ->
+                Spacer(modifier = Modifier.height(16.dp))
+                ErrorMessage(message = msg)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BaseUrlField(
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Base URL") },
+        placeholder = { Text("http://192.168.103.177:8080") },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = SecondaryBlue,
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedLabelColor = SecondaryBlue
+        ),
+        singleLine = true,
+        supportingText = {
+            Text(
+                text = "Format: http://ip:port or https://domain.com",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+        }
+    )
+}
+
+@Composable
+private fun SaveButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .shadow(8.dp, RoundedCornerShape(28.dp)),
+        shape = RoundedCornerShape(28.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = SecondaryBlue)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Save Configuration",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Composable
+private fun ResetButton(onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryRed)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = "Reset to Default",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun SuccessMessage(visible: Boolean) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
+            )
+        ) {
+            Text(
+                text = "✓ Configuration saved successfully",
+                color = Color(0xFF2E7D32),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessage(message: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+        )
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun SettingsInfoCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AccentCoral.copy(alpha = 0.1f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "ℹ️ Information",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryRed
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "• The base URL should point to your backend server\n" +
+                        "• Include the protocol (http:// or https://)\n" +
+                        "• Include the port number if required\n" +
+                        "• Changes take effect immediately",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+        }
+    }
+}
