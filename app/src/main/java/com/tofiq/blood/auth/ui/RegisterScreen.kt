@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +29,6 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,7 +43,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -67,9 +64,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tofiq.blood.auth.AuthViewModel
 import com.tofiq.blood.auth.ui.components.AuthButton
@@ -79,6 +74,7 @@ import com.tofiq.blood.auth.ui.components.AuthLogo
 import com.tofiq.blood.auth.ui.components.AuthTextField
 import com.tofiq.blood.auth.ui.components.PasswordField
 import com.tofiq.blood.auth.ui.components.PhoneNumberField
+import com.tofiq.blood.auth.ui.components.RegisterScreenState
 import com.tofiq.blood.data.model.BloodGroup
 import com.tofiq.blood.data.model.UserRole
 import com.tofiq.blood.ui.theme.AccentCoral
@@ -92,201 +88,9 @@ import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 
-@Composable
-fun LoginScreen(
-    onRegisterClick: () -> Unit,
-    onLoggedIn: () -> Unit,
-    onSettingsClick: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    var passwordVisible by remember { mutableStateOf(false) }
-    var animateContent by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(100)
-        animateContent = true
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(GradientStart, GradientMiddle, GradientEnd),
-                    start = Offset(0f, 0f),
-                    end = Offset(1000f, 1000f)
-                )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AuthLogo(
-                animate = animateContent,
-                primaryColor = PrimaryRed,
-                secondaryColor = AccentCoral,
-                rotationDirection = 180f
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AuthHeader(
-                title = "Welcome Back!",
-                subtitle = "Sign in to save lives",
-                titleColor = PrimaryRed,
-                animate = animateContent
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            LoginCard(
-                visible = animateContent,
-                phoneNumber = uiState.phoneNumber,
-                onPhoneNumberChange = viewModel::updatePhoneNumber,
-                password = uiState.password,
-                onPasswordChange = viewModel::updatePassword,
-                passwordVisible = passwordVisible,
-                onTogglePasswordVisibility = { passwordVisible = !passwordVisible },
-                isLoading = uiState.isLoading,
-                onLoginClick = { viewModel.loginWithPhone(onLoggedIn) },
-                errorMessage = uiState.errorMessage
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            LoginFooter(
-                animate = animateContent,
-                onRegisterClick = onRegisterClick
-            )
-        }
-
-        // Settings Button
-        IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun LoginCard(
-    visible: Boolean,
-    phoneNumber: String,
-    onPhoneNumberChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    passwordVisible: Boolean,
-    onTogglePasswordVisibility: () -> Unit,
-    isLoading: Boolean,
-    onLoginClick: () -> Unit,
-    errorMessage: String?
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
-        ) + fadeIn(),
-        exit = slideOutVertically() + fadeOut()
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(16.dp, RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                PhoneNumberField(
-                    value = phoneNumber,
-                    onValueChange = onPhoneNumberChange
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                PasswordField(
-                    value = password,
-                    onValueChange = onPasswordChange,
-                    passwordVisible = passwordVisible,
-                    onToggleVisibility = onTogglePasswordVisibility
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                AuthButton(
-                    text = "Sign In",
-                    onClick = onLoginClick,
-                    isLoading = isLoading,
-                    backgroundColor = PrimaryRed
-                )
-
-                errorMessage?.let { msg ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AuthErrorMessage(message = msg)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LoginFooter(
-    animate: Boolean,
-    onRegisterClick: () -> Unit
-) {
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (animate) 1f else 0f,
-        animationSpec = tween(durationMillis = 800),
-        label = "footerAlpha"
-    )
-
-    Row(
-        modifier = Modifier.alpha(contentAlpha),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Don't have an account?",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        TextButton(
-            onClick = onRegisterClick,
-            colors = ButtonDefaults.textButtonColors(contentColor = SecondaryBlue)
-        ) {
-            Text(
-                text = "Sign Up",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
+/**
+ * Registration screen for new user signup
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -295,12 +99,7 @@ fun RegisterScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var passwordVisible by remember { mutableStateOf(false) }
-    var animateContent by remember { mutableStateOf(false) }
-    var roleMenuExpanded by remember { mutableStateOf(false) }
-    var bloodGroupMenuExpanded by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
+    val screenState = remember { RegisterScreenState() }
     val datePickerState = rememberDatePickerState()
     var previousLoadingState by remember { mutableStateOf(false) }
 
@@ -311,7 +110,7 @@ fun RegisterScreen(
                 uiState.fullName.isEmpty() &&
                 uiState.errorMessage == null
             ) {
-                showSuccessDialog = true
+                screenState.updateShowSuccessDialog(true)
             }
         }
         previousLoadingState = uiState.isLoading
@@ -319,7 +118,7 @@ fun RegisterScreen(
 
     LaunchedEffect(Unit) {
         delay(100)
-        animateContent = true
+        screenState.startAnimation()
     }
 
     Box(
@@ -333,57 +132,38 @@ fun RegisterScreen(
                 )
             )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AuthLogo(
-                animate = animateContent,
-                primaryColor = SecondaryBlue,
-                secondaryColor = AccentCoral,
-                rotationDirection = -180f
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AuthHeader(
-                title = "Join Us!",
-                subtitle = "Create your account to become a hero",
-                titleColor = SecondaryBlue,
-                animate = animateContent
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            RegisterCard(
-                visible = animateContent,
-                uiState = uiState,
-                viewModel = viewModel,
-                passwordVisible = passwordVisible,
-                onTogglePasswordVisibility = { passwordVisible = !passwordVisible },
-                roleMenuExpanded = roleMenuExpanded,
-                onRoleMenuExpandedChange = { roleMenuExpanded = it },
-                bloodGroupMenuExpanded = bloodGroupMenuExpanded,
-                onBloodGroupMenuExpandedChange = { bloodGroupMenuExpanded = it },
-                onShowDatePicker = { showDatePicker = true }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            RegisterFooter(
-                animate = animateContent,
-                onLoginClick = onLoginClick
-            )
-        }
+        RegisterContent(
+            animateContent = screenState.animateContent,
+            phoneNumber = uiState.phoneNumber,
+            onPhoneNumberChange = viewModel::updatePhoneNumber,
+            password = uiState.password,
+            onPasswordChange = viewModel::updatePassword,
+            fullName = uiState.fullName,
+            onFullNameChange = viewModel::updateFullName,
+            role = uiState.role,
+            onRoleChange = viewModel::updateRole,
+            bloodGroup = uiState.bloodGroup,
+            onBloodGroupChange = viewModel::updateBloodGroup,
+            lastDonationDate = uiState.lastDonationDate?.toString() ?: "",
+            agreedToTerms = uiState.agreedToTerms,
+            onAgreedToTermsChange = viewModel::updateAgreedToTerms,
+            isLoading = uiState.isLoading,
+            errorMessage = uiState.errorMessage,
+            passwordVisible = screenState.passwordVisible,
+            onTogglePasswordVisibility = screenState::togglePasswordVisibility,
+            roleMenuExpanded = screenState.roleMenuExpanded,
+            onRoleMenuExpandedChange = screenState::updateRoleMenuExpanded,
+            bloodGroupMenuExpanded = screenState.bloodGroupMenuExpanded,
+            onBloodGroupMenuExpandedChange = screenState::updateBloodGroupMenuExpanded,
+            onShowDatePicker = { screenState.updateShowDatePicker(true) },
+            onRegisterClick = { viewModel.registerUser { } },
+            onLoginClick = onLoginClick
+        )
 
         // Date Picker Dialog
-        if (showDatePicker) {
+        if (screenState.showDatePicker) {
             DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
+                onDismissRequest = { screenState.updateShowDatePicker(false) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -392,12 +172,12 @@ fun RegisterScreen(
                                 val date = instant.atZone(ZoneId.systemDefault()).toLocalDate()
                                 viewModel.updateLastDonationDate(date)
                             }
-                            showDatePicker = false
+                            screenState.updateShowDatePicker(false)
                         }
                     ) { Text("OK") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                    TextButton(onClick = { screenState.updateShowDatePicker(false) }) { Text("Cancel") }
                 }
             ) {
                 DatePicker(state = datePickerState)
@@ -405,10 +185,10 @@ fun RegisterScreen(
         }
 
         // Success Dialog
-        if (showSuccessDialog) {
-            SuccessDialog(
+        if (screenState.showSuccessDialog) {
+            RegistrationSuccessDialog(
                 onDismiss = {
-                    showSuccessDialog = false
+                    screenState.updateShowSuccessDialog(false)
                     onRegistered()
                 }
             )
@@ -416,19 +196,123 @@ fun RegisterScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RegisterCard(
-    visible: Boolean,
-    uiState: com.tofiq.blood.auth.AuthUiState,
-    viewModel: AuthViewModel,
+private fun RegisterContent(
+    animateContent: Boolean,
+    phoneNumber: String,
+    onPhoneNumberChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
+    role: UserRole?,
+    onRoleChange: (UserRole) -> Unit,
+    bloodGroup: BloodGroup?,
+    onBloodGroupChange: (BloodGroup) -> Unit,
+    lastDonationDate: String,
+    agreedToTerms: Boolean,
+    onAgreedToTermsChange: (Boolean) -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
     passwordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit,
     roleMenuExpanded: Boolean,
     onRoleMenuExpandedChange: (Boolean) -> Unit,
     bloodGroupMenuExpanded: Boolean,
     onBloodGroupMenuExpandedChange: (Boolean) -> Unit,
-    onShowDatePicker: () -> Unit
+    onShowDatePicker: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onLoginClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AuthLogo(
+            animate = animateContent,
+            primaryColor = SecondaryBlue,
+            secondaryColor = AccentCoral,
+            rotationDirection = -180f
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        AuthHeader(
+            title = "Join Us!",
+            subtitle = "Create your account to become a hero",
+            titleColor = SecondaryBlue,
+            animate = animateContent
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        RegisterCard(
+            visible = animateContent,
+            phoneNumber = phoneNumber,
+            onPhoneNumberChange = onPhoneNumberChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            fullName = fullName,
+            onFullNameChange = onFullNameChange,
+            role = role,
+            onRoleChange = onRoleChange,
+            bloodGroup = bloodGroup,
+            onBloodGroupChange = onBloodGroupChange,
+            lastDonationDate = lastDonationDate,
+            agreedToTerms = agreedToTerms,
+            onAgreedToTermsChange = onAgreedToTermsChange,
+            isLoading = isLoading,
+            errorMessage = errorMessage,
+            passwordVisible = passwordVisible,
+            onTogglePasswordVisibility = onTogglePasswordVisibility,
+            roleMenuExpanded = roleMenuExpanded,
+            onRoleMenuExpandedChange = onRoleMenuExpandedChange,
+            bloodGroupMenuExpanded = bloodGroupMenuExpanded,
+            onBloodGroupMenuExpandedChange = onBloodGroupMenuExpandedChange,
+            onShowDatePicker = onShowDatePicker,
+            onRegisterClick = onRegisterClick
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        RegisterFooter(
+            animate = animateContent,
+            onLoginClick = onLoginClick
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegisterCard(
+    visible: Boolean,
+    phoneNumber: String,
+    onPhoneNumberChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
+    role: UserRole?,
+    onRoleChange: (UserRole) -> Unit,
+    bloodGroup: BloodGroup?,
+    onBloodGroupChange: (BloodGroup) -> Unit,
+    lastDonationDate: String,
+    agreedToTerms: Boolean,
+    onAgreedToTermsChange: (Boolean) -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
+    passwordVisible: Boolean,
+    onTogglePasswordVisibility: () -> Unit,
+    roleMenuExpanded: Boolean,
+    onRoleMenuExpandedChange: (Boolean) -> Unit,
+    bloodGroupMenuExpanded: Boolean,
+    onBloodGroupMenuExpandedChange: (Boolean) -> Unit,
+    onShowDatePicker: () -> Unit,
+    onRegisterClick: () -> Unit
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -449,88 +333,138 @@ private fun RegisterCard(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                PhoneNumberField(
-                    value = uiState.phoneNumber,
-                    onValueChange = viewModel::updatePhoneNumber,
-                    placeholder = "+1234567890"
-                )
+            RegisterCardContent(
+                phoneNumber = phoneNumber,
+                onPhoneNumberChange = onPhoneNumberChange,
+                password = password,
+                onPasswordChange = onPasswordChange,
+                fullName = fullName,
+                onFullNameChange = onFullNameChange,
+                role = role,
+                onRoleChange = onRoleChange,
+                bloodGroup = bloodGroup,
+                onBloodGroupChange = onBloodGroupChange,
+                lastDonationDate = lastDonationDate,
+                agreedToTerms = agreedToTerms,
+                onAgreedToTermsChange = onAgreedToTermsChange,
+                isLoading = isLoading,
+                errorMessage = errorMessage,
+                passwordVisible = passwordVisible,
+                onTogglePasswordVisibility = onTogglePasswordVisibility,
+                roleMenuExpanded = roleMenuExpanded,
+                onRoleMenuExpandedChange = onRoleMenuExpandedChange,
+                bloodGroupMenuExpanded = bloodGroupMenuExpanded,
+                onBloodGroupMenuExpandedChange = onBloodGroupMenuExpandedChange,
+                onShowDatePicker = onShowDatePicker,
+                onRegisterClick = onRegisterClick
+            )
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(16.dp))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegisterCardContent(
+    phoneNumber: String,
+    onPhoneNumberChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
+    role: UserRole?,
+    onRoleChange: (UserRole) -> Unit,
+    bloodGroup: BloodGroup?,
+    onBloodGroupChange: (BloodGroup) -> Unit,
+    lastDonationDate: String,
+    agreedToTerms: Boolean,
+    onAgreedToTermsChange: (Boolean) -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
+    passwordVisible: Boolean,
+    onTogglePasswordVisibility: () -> Unit,
+    roleMenuExpanded: Boolean,
+    onRoleMenuExpandedChange: (Boolean) -> Unit,
+    bloodGroupMenuExpanded: Boolean,
+    onBloodGroupMenuExpandedChange: (Boolean) -> Unit,
+    onShowDatePicker: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        PhoneNumberField(
+            value = phoneNumber,
+            onValueChange = onPhoneNumberChange,
+            placeholder = "+1234567890"
+        )
 
-                PasswordField(
-                    value = uiState.password,
-                    onValueChange = viewModel::updatePassword,
-                    passwordVisible = passwordVisible,
-                    onToggleVisibility = onTogglePasswordVisibility,
-                    placeholder = "Minimum 8 characters"
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+        PasswordField(
+            value = password,
+            onValueChange = onPasswordChange,
+            passwordVisible = passwordVisible,
+            onToggleVisibility = onTogglePasswordVisibility,
+            placeholder = "Minimum 8 characters"
+        )
 
-                AuthTextField(
-                    value = uiState.fullName,
-                    onValueChange = viewModel::updateFullName,
-                    label = "Full Name",
-                    leadingIcon = Icons.Default.Person
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+        AuthTextField(
+            value = fullName,
+            onValueChange = onFullNameChange,
+            label = "Full Name",
+            leadingIcon = Icons.Default.Person
+        )
 
-                // Role Dropdown
-                RoleDropdown(
-                    selectedRole = uiState.role,
-                    expanded = roleMenuExpanded,
-                    onExpandedChange = onRoleMenuExpandedChange,
-                    onRoleSelected = viewModel::updateRole
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+        RoleDropdown(
+            selectedRole = role,
+            expanded = roleMenuExpanded,
+            onExpandedChange = onRoleMenuExpandedChange,
+            onRoleSelected = onRoleChange
+        )
 
-                // Blood Group Dropdown
-                BloodGroupDropdown(
-                    selectedBloodGroup = uiState.bloodGroup,
-                    expanded = bloodGroupMenuExpanded,
-                    onExpandedChange = onBloodGroupMenuExpandedChange,
-                    onBloodGroupSelected = viewModel::updateBloodGroup
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                // Last Donation Date (for donors only)
-                if (uiState.role == UserRole.DONOR) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LastDonationDateField(
-                        date = uiState.lastDonationDate?.toString() ?: "",
-                        onClick = onShowDatePicker
-                    )
-                }
+        BloodGroupDropdown(
+            selectedBloodGroup = bloodGroup,
+            expanded = bloodGroupMenuExpanded,
+            onExpandedChange = onBloodGroupMenuExpandedChange,
+            onBloodGroupSelected = onBloodGroupChange
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+        if (role == UserRole.DONOR) {
+            Spacer(modifier = Modifier.height(16.dp))
+            LastDonationDateField(
+                date = lastDonationDate,
+                onClick = onShowDatePicker
+            )
+        }
 
-                // Terms Checkbox
-                TermsCheckbox(
-                    checked = uiState.agreedToTerms,
-                    onCheckedChange = viewModel::updateAgreedToTerms
-                )
+        Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+        TermsCheckbox(
+            checked = agreedToTerms,
+            onCheckedChange = onAgreedToTermsChange
+        )
 
-                AuthButton(
-                    text = "Create Account",
-                    onClick = { viewModel.registerUser { } },
-                    isLoading = uiState.isLoading,
-                    backgroundColor = SecondaryBlue
-                )
+        Spacer(modifier = Modifier.height(24.dp))
 
-                uiState.errorMessage?.let { msg ->
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AuthErrorMessage(message = msg)
-                }
-            }
+        AuthButton(
+            text = "Create Account",
+            onClick = onRegisterClick,
+            isLoading = isLoading,
+            backgroundColor = SecondaryBlue
+        )
+
+        errorMessage?.let { msg ->
+            Spacer(modifier = Modifier.height(16.dp))
+            AuthErrorMessage(message = msg)
         }
     }
 }
@@ -747,7 +681,7 @@ private fun RegisterFooter(
 }
 
 @Composable
-private fun SuccessDialog(onDismiss: () -> Unit) {
+private fun RegistrationSuccessDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = { },
         title = {

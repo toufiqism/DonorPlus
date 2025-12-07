@@ -33,7 +33,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -49,10 +52,94 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tofiq.blood.data.model.BloodGroup
+import com.tofiq.blood.data.model.UserRole
 import com.tofiq.blood.ui.theme.AccentCoral
 import com.tofiq.blood.ui.theme.PrimaryRed
 import com.tofiq.blood.ui.theme.SecondaryBlue
 import com.tofiq.blood.ui.theme.TextSecondary
+import java.time.LocalDate
+
+// ============== Immutable Data Classes ==============
+
+@Immutable
+data class LoginFormData(
+    val phoneNumber: String = "",
+    val password: String = "",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
+
+@Immutable
+data class RegisterFormData(
+    val phoneNumber: String = "",
+    val password: String = "",
+    val fullName: String = "",
+    val role: UserRole? = null,
+    val bloodGroup: BloodGroup? = null,
+    val lastDonationDate: LocalDate? = null,
+    val agreedToTerms: Boolean = false,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
+
+// ============== Stable State Holders ==============
+
+@Stable
+class LoginScreenState {
+    var passwordVisible by mutableStateOf(false)
+        private set
+    var animateContent by mutableStateOf(false)
+        private set
+
+    fun togglePasswordVisibility() {
+        passwordVisible = !passwordVisible
+    }
+
+    fun startAnimation() {
+        animateContent = true
+    }
+}
+
+@Stable
+class RegisterScreenState {
+    var passwordVisible by mutableStateOf(false)
+        private set
+    var animateContent by mutableStateOf(false)
+        private set
+    var roleMenuExpanded by mutableStateOf(false)
+        private set
+    var bloodGroupMenuExpanded by mutableStateOf(false)
+        private set
+    var showDatePicker by mutableStateOf(false)
+        private set
+    var showSuccessDialog by mutableStateOf(false)
+        private set
+
+    fun togglePasswordVisibility() {
+        passwordVisible = !passwordVisible
+    }
+
+    fun startAnimation() {
+        animateContent = true
+    }
+
+    fun updateRoleMenuExpanded(expanded: Boolean) {
+        roleMenuExpanded = expanded
+    }
+
+    fun updateBloodGroupMenuExpanded(expanded: Boolean) {
+        bloodGroupMenuExpanded = expanded
+    }
+
+    fun updateShowDatePicker(show: Boolean) {
+        showDatePicker = show
+    }
+
+    fun updateShowSuccessDialog(show: Boolean) {
+        showSuccessDialog = show
+    }
+}
 
 /**
  * Animated logo component for auth screens
