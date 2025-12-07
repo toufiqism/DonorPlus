@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,9 +47,12 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val showFeatureToast = {
-        Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+    val showFeatureToast = remember {
+        {
+            Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+        }
     }
+    
     DonorPlusSolidBackground {
         Column(
             modifier = modifier
@@ -56,134 +60,153 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Welcome Header Card
-            DonorPlusCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(DonorPlusSpacing.M),
-                backgroundColor = PrimaryRed
-            ) {
-                Column(
-                    modifier = Modifier.padding(DonorPlusSpacing.L)
-                ) {
-                    Text(
-                        text = "Welcome Back!",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
-                    Text(
-                        text = "Ready to save lives today?",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
+            WelcomeHeader()
             
             // Stats Section
-            Column(
-                modifier = Modifier.padding(DonorPlusSpacing.M)
-            ) {
-                DonorPlusSectionHeader(text = "Your Impact")
-                
-                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
-                ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.Favorite,
-                        value = "12",
-                        label = "Donations",
-                        color = PrimaryRed
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.People,
-                        value = "36",
-                        label = "Lives Saved",
-                        color = SuccessGreen
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
-                ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.LocalHospital,
-                        value = "A+",
-                        label = "Blood Type",
-                        color = SecondaryBlue
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.Favorite,
-                        value = "45",
-                        label = "Days Until",
-                        color = AccentCoral
-                    )
-                }
-            }
+            StatsSection()
             
             // Quick Actions Section
-            Column(
-                modifier = Modifier.padding(DonorPlusSpacing.M)
-            ) {
-                DonorPlusSectionHeader(text = "Quick Actions")
-                
-                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                
-                DonorPlusCard {
-                    Column(
-                        modifier = Modifier.padding(DonorPlusSpacing.L)
-                    ) {
-                        DonorPlusPrimaryButton(
-                            onClick = { showFeatureToast() },
-                            text = "Book Donation",
-                            icon = Icons.Default.Favorite
-                        )
-                        
-                        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                        
-                        Text(
-                            text = "Find nearby donation centers and schedule your next donation.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
-                        )
-                    }
-                }
-            }
+            QuickActionsSection(onBookDonation = showFeatureToast)
             
             // Recent Activity Section
+            RecentActivitySection()
+        }
+    }
+}
+
+@Composable
+private fun WelcomeHeader() {
+    DonorPlusCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(DonorPlusSpacing.M),
+        backgroundColor = PrimaryRed
+    ) {
+        Column(
+            modifier = Modifier.padding(DonorPlusSpacing.L)
+        ) {
+            Text(
+                text = "Welcome Back!",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
+            Text(
+                text = "Ready to save lives today?",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White.copy(alpha = 0.9f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatsSection() {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusSectionHeader(text = "Your Impact")
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
+        ) {
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Favorite,
+                value = "12",
+                label = "Donations",
+                color = PrimaryRed
+            )
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.People,
+                value = "36",
+                label = "Lives Saved",
+                color = SuccessGreen
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DonorPlusSpacing.M)
+        ) {
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.LocalHospital,
+                value = "A+",
+                label = "Blood Type",
+                color = SecondaryBlue
+            )
+            StatCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Favorite,
+                value = "45",
+                label = "Days Until",
+                color = AccentCoral
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickActionsSection(onBookDonation: () -> Unit) {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusSectionHeader(text = "Quick Actions")
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        DonorPlusCard {
             Column(
-                modifier = Modifier.padding(DonorPlusSpacing.M)
+                modifier = Modifier.padding(DonorPlusSpacing.L)
             ) {
-                DonorPlusSectionHeader(text = "Recent Activity")
+                DonorPlusPrimaryButton(
+                    onClick = onBookDonation,
+                    text = "Book Donation",
+                    icon = Icons.Default.Favorite
+                )
                 
                 Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
                 
-                ActivityCard(
-                    title = "Blood Donation",
-                    date = "Dec 1, 2025",
-                    location = "City Hospital"
-                )
-                
-                Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
-                
-                ActivityCard(
-                    title = "Blood Donation",
-                    date = "Oct 15, 2025",
-                    location = "Community Center"
+                Text(
+                    text = "Find nearby donation centers and schedule your next donation.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun RecentActivitySection() {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusSectionHeader(text = "Recent Activity")
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        ActivityCard(
+            title = "Blood Donation",
+            date = "Dec 1, 2025",
+            location = "City Hospital"
+        )
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
+        
+        ActivityCard(
+            title = "Blood Donation",
+            date = "Oct 15, 2025",
+            location = "Community Center"
+        )
     }
 }
 
@@ -217,10 +240,9 @@ private fun StatCard(
             Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
-                ),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
                 color = color
             )
             Text(
@@ -260,9 +282,8 @@ private fun ActivityCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "$date • $location",

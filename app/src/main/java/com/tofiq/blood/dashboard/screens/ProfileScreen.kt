@@ -2,7 +2,6 @@ package com.tofiq.blood.dashboard.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tofiq.blood.ui.components.DonorPlusCard
 import com.tofiq.blood.ui.components.DonorPlusOutlinedButton
 import com.tofiq.blood.ui.components.DonorPlusSectionHeader
@@ -58,167 +57,195 @@ fun ProfileScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val showFeatureToast = {
-        Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+    val showFeatureToast = remember {
+        {
+            Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+        }
     }
+    
     DonorPlusSolidBackground {
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Profile Header with gradient background
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(PrimaryRed, AccentCoral)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Profile Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            modifier = Modifier.size(60.dp),
-                            tint = PrimaryRed
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                    
-                    Text(
-                        text = "John Doe",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-                    
-                    Text(
-                        text = "Blood Type: A+",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-                
-                // Edit button
-                IconButton(
-                    onClick = { showFeatureToast() },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(DonorPlusSpacing.M)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Profile",
-                        tint = Color.White
-                    )
-                }
-            }
+            // Profile Header
+            ProfileHeader(onEditClick = showFeatureToast)
             
             // Profile Information Section
-            Column(
-                modifier = Modifier.padding(DonorPlusSpacing.M)
-            ) {
-                DonorPlusSectionHeader(text = "Personal Information")
-                
-                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                
-                DonorPlusCard {
-                    Column(
-                        modifier = Modifier.padding(DonorPlusSpacing.M)
-                    ) {
-                        ProfileInfoItem(
-                            icon = Icons.Default.Email,
-                            label = "Email",
-                            value = "john.doe@example.com"
-                        )
-                        
-                        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                        
-                        ProfileInfoItem(
-                            icon = Icons.Default.Phone,
-                            label = "Phone",
-                            value = "+1 (555) 123-4567"
-                        )
-                        
-                        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                        
-                        ProfileInfoItem(
-                            icon = Icons.Default.LocalHospital,
-                            label = "Blood Type",
-                            value = "A+ (Positive)"
-                        )
-                        
-                        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                        
-                        ProfileInfoItem(
-                            icon = Icons.Default.Favorite,
-                            label = "Total Donations",
-                            value = "12 times"
-                        )
-                    }
-                }
-            }
+            PersonalInfoSection()
             
             // Settings Section
+            SettingsSection(
+                onNotificationsClick = showFeatureToast,
+                onAccountSettingsClick = showFeatureToast
+            )
+            
+            // Logout Button
+            LogoutSection(onLogoutClick = showFeatureToast)
+        }
+    }
+}
+
+@Composable
+private fun ProfileHeader(onEditClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(PrimaryRed, AccentCoral)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Profile Avatar
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(60.dp),
+                    tint = PrimaryRed
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+            
+            Text(
+                text = "John Doe",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            
+            Text(
+                text = "Blood Type: A+",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.9f)
+            )
+        }
+        
+        // Edit button
+        IconButton(
+            onClick = onEditClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(DonorPlusSpacing.M)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit Profile",
+                tint = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+private fun PersonalInfoSection() {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusSectionHeader(text = "Personal Information")
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        DonorPlusCard {
             Column(
                 modifier = Modifier.padding(DonorPlusSpacing.M)
             ) {
-                DonorPlusSectionHeader(text = "Settings")
+                ProfileInfoItem(
+                    icon = Icons.Default.Email,
+                    label = "Email",
+                    value = "john.doe@example.com"
+                )
                 
                 Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
                 
-                DonorPlusCard {
-                    Column(
-                        modifier = Modifier.padding(DonorPlusSpacing.M)
-                    ) {
-                        SettingsItem(
-                            icon = Icons.Default.Notifications,
-                            title = "Notifications",
-                            subtitle = "Manage notification preferences",
-                            onClick = { showFeatureToast() }
-                        )
-                        
-                        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-                        
-                        SettingsItem(
-                            icon = Icons.Default.Settings,
-                            title = "Account Settings",
-                            subtitle = "Privacy and security",
-                            onClick = { showFeatureToast() }
-                        )
-                    }
-                }
-            }
-            
-            // Logout Button
-            Column(
-                modifier = Modifier.padding(DonorPlusSpacing.M)
-            ) {
-                DonorPlusOutlinedButton(
-                    onClick = { showFeatureToast() },
-                    text = "Logout",
-                    icon = Icons.Default.Logout,
-                    borderColor = PrimaryRed,
-                    textColor = PrimaryRed
+                ProfileInfoItem(
+                    icon = Icons.Default.Phone,
+                    label = "Phone",
+                    value = "+1 (555) 123-4567"
+                )
+                
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                
+                ProfileInfoItem(
+                    icon = Icons.Default.LocalHospital,
+                    label = "Blood Type",
+                    value = "A+ (Positive)"
+                )
+                
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                
+                ProfileInfoItem(
+                    icon = Icons.Default.Favorite,
+                    label = "Total Donations",
+                    value = "12 times"
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    onNotificationsClick: () -> Unit,
+    onAccountSettingsClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusSectionHeader(text = "Settings")
+        
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        
+        DonorPlusCard {
+            Column(
+                modifier = Modifier.padding(DonorPlusSpacing.M)
+            ) {
+                SettingsItem(
+                    icon = Icons.Default.Notifications,
+                    title = "Notifications",
+                    subtitle = "Manage notification preferences",
+                    onClick = onNotificationsClick
+                )
+                
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "Account Settings",
+                    subtitle = "Privacy and security",
+                    onClick = onAccountSettingsClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LogoutSection(onLogoutClick: () -> Unit) {
+    Column(
+        modifier = Modifier.padding(DonorPlusSpacing.M)
+    ) {
+        DonorPlusOutlinedButton(
+            onClick = onLogoutClick,
+            text = "Logout",
+            icon = Icons.Default.Logout,
+            borderColor = PrimaryRed,
+            textColor = PrimaryRed
+        )
     }
 }
 
@@ -250,9 +277,8 @@ private fun ProfileInfoItem(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium
-                )
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -269,8 +295,7 @@ private fun SettingsItem(
     onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -283,9 +308,8 @@ private fun SettingsItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium
-                )
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = subtitle,

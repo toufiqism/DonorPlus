@@ -3,6 +3,7 @@ package com.tofiq.blood.dashboard.screens
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,10 +43,50 @@ import com.tofiq.blood.ui.theme.TextSecondary
  * Data class for donation center
  */
 data class DonationCenter(
+    val id: String,
     val name: String,
     val address: String,
     val phone: String,
     val distance: String
+)
+
+// Sample data - moved outside composable to prevent recreation
+private val sampleDonationCenters = listOf(
+    DonationCenter(
+        id = "1",
+        name = "City Hospital Blood Bank",
+        address = "123 Main Street, Downtown",
+        phone = "+1 (555) 123-4567",
+        distance = "0.5 km"
+    ),
+    DonationCenter(
+        id = "2",
+        name = "Community Health Center",
+        address = "456 Oak Avenue, Midtown",
+        phone = "+1 (555) 234-5678",
+        distance = "1.2 km"
+    ),
+    DonationCenter(
+        id = "3",
+        name = "Red Cross Blood Center",
+        address = "789 Pine Road, Uptown",
+        phone = "+1 (555) 345-6789",
+        distance = "2.3 km"
+    ),
+    DonationCenter(
+        id = "4",
+        name = "Memorial Hospital",
+        address = "321 Elm Street, Westside",
+        phone = "+1 (555) 456-7890",
+        distance = "3.1 km"
+    ),
+    DonationCenter(
+        id = "5",
+        name = "Central Medical Center",
+        address = "654 Maple Drive, Eastside",
+        phone = "+1 (555) 567-8901",
+        distance = "4.5 km"
+    )
 )
 
 /**
@@ -56,54 +97,20 @@ fun SearchScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val showFeatureToast = {
-        Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+    val showFeatureToast = remember {
+        {
+            Toast.makeText(context, "Feature under development", Toast.LENGTH_SHORT).show()
+        }
     }
     
     var searchQuery by remember { mutableStateOf("") }
     
-    // Sample data
-    val donationCenters = remember {
-        listOf(
-            DonationCenter(
-                name = "City Hospital Blood Bank",
-                address = "123 Main Street, Downtown",
-                phone = "+1 (555) 123-4567",
-                distance = "0.5 km"
-            ),
-            DonationCenter(
-                name = "Community Health Center",
-                address = "456 Oak Avenue, Midtown",
-                phone = "+1 (555) 234-5678",
-                distance = "1.2 km"
-            ),
-            DonationCenter(
-                name = "Red Cross Blood Center",
-                address = "789 Pine Road, Uptown",
-                phone = "+1 (555) 345-6789",
-                distance = "2.3 km"
-            ),
-            DonationCenter(
-                name = "Memorial Hospital",
-                address = "321 Elm Street, Westside",
-                phone = "+1 (555) 456-7890",
-                distance = "3.1 km"
-            ),
-            DonationCenter(
-                name = "Central Medical Center",
-                address = "654 Maple Drive, Eastside",
-                phone = "+1 (555) 567-8901",
-                distance = "4.5 km"
-            )
-        )
-    }
-    
     // Filter centers based on search query
     val filteredCenters = remember(searchQuery) {
         if (searchQuery.isBlank()) {
-            donationCenters
+            sampleDonationCenters
         } else {
-            donationCenters.filter { center ->
+            sampleDonationCenters.filter { center ->
                 center.name.contains(searchQuery, ignoreCase = true) ||
                 center.address.contains(searchQuery, ignoreCase = true)
             }
@@ -112,41 +119,50 @@ fun SearchScreen(
     
     DonorPlusSolidBackground {
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(DonorPlusSpacing.M)
+            modifier = modifier.fillMaxSize()
         ) {
-            DonorPlusSectionHeader(text = "Find Donation Centers")
-            
-            Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-            
-            // Search field
-            DonorPlusTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = "Search by name or location",
-                leadingIcon = Icons.Default.Search
-            )
-            
-            Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
-            
-            // Results count
-            Text(
-                text = "${filteredCenters.size} centers found nearby",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
-            )
-            
-            Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+            Column(
+                modifier = Modifier.padding(DonorPlusSpacing.M)
+            ) {
+                DonorPlusSectionHeader(text = "Find Donation Centers")
+                
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                
+                // Search field
+                DonorPlusTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = "Search by name or location",
+                    leadingIcon = Icons.Default.Search
+                )
+                
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                
+                // Results count
+                Text(
+                    text = "${filteredCenters.size} centers found nearby",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+            }
             
             // List of donation centers
             LazyColumn(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = DonorPlusSpacing.M,
+                    end = DonorPlusSpacing.M,
+                    top = DonorPlusSpacing.M,
+                    bottom = DonorPlusSpacing.M
+                )
             ) {
-                items(filteredCenters) { center ->
+                items(
+                    items = filteredCenters,
+                    key = { it.id }
+                ) { center ->
                     DonationCenterCard(
                         center = center,
-                        onClick = { showFeatureToast() }
+                        onClick = showFeatureToast
                     )
                     Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
                 }
@@ -167,7 +183,7 @@ private fun DonationCenterCard(
     DonorPlusCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(onClick = onClick),
         elevation = 8.dp
     ) {
         Column(
@@ -180,16 +196,14 @@ private fun DonationCenterCard(
             ) {
                 Text(
                     text = center.name,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = center.distance,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
                     color = PrimaryRed
                 )
             }

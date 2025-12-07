@@ -114,7 +114,8 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            beyondViewportPageCount = 1
+            beyondViewportPageCount = 0,
+            userScrollEnabled = true
         ) { page ->
             when (page) {
                 0 -> HomeScreen()
