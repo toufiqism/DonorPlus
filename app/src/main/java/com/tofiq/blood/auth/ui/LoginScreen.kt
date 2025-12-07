@@ -32,6 +32,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tofiq.blood.auth.AuthViewModel
 import com.tofiq.blood.auth.ui.components.AuthButton
-import com.tofiq.blood.auth.ui.components.AuthErrorMessage
 import com.tofiq.blood.auth.ui.components.AuthHeader
 import com.tofiq.blood.auth.ui.components.AuthLogo
 import com.tofiq.blood.auth.ui.components.LoginScreenState
@@ -78,43 +81,66 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val screenState = remember { LoginScreenState() }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error message in Snackbar when errorMessage changes
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearError()
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(100)
         screenState.startAnimation()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(GradientStart, GradientMiddle, GradientEnd),
-                    start = Offset(0f, 0f),
-                    end = Offset(1000f, 1000f)
+    Scaffold(
+        containerColor = Color.Transparent,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    shape = RoundedCornerShape(12.dp)
                 )
-            )
-    ) {
-        LoginContent(
-            animateContent = screenState.animateContent,
-            phoneNumber = uiState.phoneNumber,
-            onPhoneNumberChange = viewModel::updatePhoneNumber,
-            password = uiState.password,
-            onPasswordChange = viewModel::updatePassword,
-            passwordVisible = screenState.passwordVisible,
-            onTogglePasswordVisibility = screenState::togglePasswordVisibility,
-            isLoading = uiState.isLoading,
-            onLoginClick = { viewModel.loginWithPhone(onLoggedIn) },
-            errorMessage = uiState.errorMessage,
-            onRegisterClick = onRegisterClick
-        )
-
-        SettingsButton(
-            onClick = onSettingsClick,
+            }
+        }
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        )
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(GradientStart, GradientMiddle, GradientEnd),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 1000f)
+                    )
+                )
+        ) {
+            LoginContent(
+                animateContent = screenState.animateContent,
+                phoneNumber = uiState.phoneNumber,
+                onPhoneNumberChange = viewModel::updatePhoneNumber,
+                password = uiState.password,
+                onPasswordChange = viewModel::updatePassword,
+                passwordVisible = screenState.passwordVisible,
+                onTogglePasswordVisibility = screenState::togglePasswordVisibility,
+                isLoading = uiState.isLoading,
+                onLoginClick = { viewModel.loginWithPhone(onLoggedIn) },
+                onRegisterClick = onRegisterClick
+            )
+
+            SettingsButton(
+                onClick = onSettingsClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            )
+        }
     }
 }
 
@@ -129,7 +155,6 @@ private fun LoginContent(
     onTogglePasswordVisibility: () -> Unit,
     isLoading: Boolean,
     onLoginClick: () -> Unit,
-    errorMessage: String?,
     onRegisterClick: () -> Unit
 ) {
     Column(
@@ -167,8 +192,7 @@ private fun LoginContent(
             passwordVisible = passwordVisible,
             onTogglePasswordVisibility = onTogglePasswordVisibility,
             isLoading = isLoading,
-            onLoginClick = onLoginClick,
-            errorMessage = errorMessage
+            onLoginClick = onLoginClick
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -208,8 +232,7 @@ private fun LoginCard(
     passwordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit,
     isLoading: Boolean,
-    onLoginClick: () -> Unit,
-    errorMessage: String?
+    onLoginClick: () -> Unit
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -238,8 +261,7 @@ private fun LoginCard(
                 passwordVisible = passwordVisible,
                 onTogglePasswordVisibility = onTogglePasswordVisibility,
                 isLoading = isLoading,
-                onLoginClick = onLoginClick,
-                errorMessage = errorMessage
+                onLoginClick = onLoginClick
             )
         }
     }
@@ -254,8 +276,7 @@ private fun LoginCardContent(
     passwordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit,
     isLoading: Boolean,
-    onLoginClick: () -> Unit,
-    errorMessage: String?
+    onLoginClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -285,11 +306,6 @@ private fun LoginCardContent(
             isLoading = isLoading,
             backgroundColor = PrimaryRed
         )
-
-        errorMessage?.let { msg ->
-            Spacer(modifier = Modifier.height(16.dp))
-            AuthErrorMessage(message = msg)
-        }
     }
 }
 

@@ -3,18 +3,18 @@ package com.tofiq.blood.auth
 import com.google.firebase.auth.FirebaseAuth
 import com.tofiq.blood.data.local.PreferencesManager
 import com.tofiq.blood.data.model.AuthToken
+import com.tofiq.blood.data.model.BloodGroup
 import com.tofiq.blood.data.model.LoginRequest
 import com.tofiq.blood.data.model.RegisterRequest
-import com.tofiq.blood.data.model.RegisterResponse
+import com.tofiq.blood.data.model.UserRole
+import com.tofiq.blood.data.remote.ApiException
+import com.tofiq.blood.data.remote.ApiResult
 import com.tofiq.blood.data.remote.AuthApiService
+import com.tofiq.blood.data.remote.safeApiCall
 import kotlinx.coroutines.tasks.await
-import org.json.JSONObject
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
-
-import com.tofiq.blood.data.model.BloodGroup
-import com.tofiq.blood.data.model.UserRole
-import java.time.LocalDate
 
 /**
  * Repository interface for authentication operations
@@ -40,7 +40,7 @@ interface AuthRepository {
 
 /**
  * REST API implementation of AuthRepository
- * Handles authentication using backend REST API
+ * Handles authentication using backend REST API with safe API layer
  */
 @Singleton
 class RestAuthRepository @Inject constructor(
@@ -49,51 +49,49 @@ class RestAuthRepository @Inject constructor(
 ) : AuthRepository {
 
     /**
-     * Login with phone number and password using REST API
+     * Login with phone number and password using REST API.
+     * Uses safeApiCall for consistent error handling.
      */
-    override suspend fun loginWithPhonePassword(phoneNumber: String, password: String): Result<Unit> =
-        runCatching {
-            val loginRequest = LoginRequest(
-                phoneNumber = phoneNumber.trim(),
-                password = password
-            )
-            
-            val response = authApiService.login(loginRequest)
-            
-            if (response.isSuccessful) {
-                val loginResponse = response.body()
-                
-                // Check if the API call was successful
-                if (loginResponse != null) {
-                    if (loginResponse.success && loginResponse.data?.token != null) {
-                        // Success - save auth token
-                        val authToken = AuthToken(
-                            token = loginResponse.data.token,
-                            refreshToken = loginResponse.data.refreshToken,
-                            userId = loginResponse.data.userId,
-                            phoneNumber = loginResponse.data.phoneNumber
-                        )
-                        preferencesManager.saveAuthToken(authToken)
-                        Unit
-                    } else {
-                        // API returned success=false
-                        throw Exception(loginResponse.message ?: "Login failed")
-                    }
+    override suspend fun loginWithPhonePassword(phoneNumber: String, password: String): Result<Unit> {
+        val loginRequest = LoginRequest(
+            phoneNumber = phoneNumber.trim(),
+            password = password
+        )
+        
+        // Use safe API call for consistent error handling
+        return when (val result = safeApiCall { authApiService.login(loginRequest) }) {
+            is ApiResult.Success -> {
+                val loginResponse = result.data
+                if (loginResponse.success && loginResponse.data?.token != null) {
+                    // Success - save auth token
+                    val authToken = AuthToken(
+                        token = loginResponse.data.token,
+                        refreshToken = loginResponse.data.refreshToken,
+                        userId = loginResponse.data.userId,
+                        phoneNumber = loginResponse.data.phoneNumber
+                    )
+                    preferencesManager.saveAuthToken(authToken)
+                    Result.success(Unit)
                 } else {
-                    throw Exception("Login failed: No response received")
-                }
-            } else {
-                // HTTP error - try to parse error body
-                val errorResponse = response.errorBody()?.let { it ->
-                    val errorJson = JSONObject(it.string())
-                    val errorMessage = errorJson.optString("message")
-                    val errorCode = errorJson.optString("code")
-                    val error = Exception("Login failed: ${response.code()} - ${errorMessage ?: "Unknown error"}")
-                    error.addSuppressed(Throwable("Error response: $it"))
-                    throw error
+                    // API returned success=false
+                    Result.failure(Exception(loginResponse.message ?: "Login failed"))
                 }
             }
+            is ApiResult.Empty -> {
+                Result.failure(Exception("Login failed: No response received"))
+            }
+            is ApiResult.Error -> {
+                val errorMessage = result.getUserMessage()
+                Result.failure(
+                    result.cause ?: ApiException(errorMessage, result.statusCode ?: 0)
+                )
+            }
+            is ApiResult.Loading -> {
+                // Should not happen with safeApiCall
+                Result.failure(Exception("Unexpected loading state"))
+            }
         }
+    }
 
     /**
      * Login with email and password (for backward compatibility)
@@ -110,7 +108,8 @@ class RestAuthRepository @Inject constructor(
         Result.failure(UnsupportedOperationException("Registration not supported with REST API"))
 
     /**
-     * Register a new user with REST API
+     * Register a new user with REST API.
+     * Uses safeApiCall for consistent error handling.
      */
     override suspend fun register(
         phoneNumber: String,
@@ -122,7 +121,7 @@ class RestAuthRepository @Inject constructor(
         lastDonationDate: LocalDate?,
         latitude: Double?,
         longitude: Double?
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> {
         val registerRequest = RegisterRequest(
             phoneNumber = phoneNumber.trim(),
             password = password,
@@ -130,21 +129,17 @@ class RestAuthRepository @Inject constructor(
             role = role,
             agreedToTerms = agreedToTerms,
             bloodGroup = bloodGroup,
-            lastDonationDate = lastDonationDate?.toString(), // Convert LocalDate to ISO string
+            lastDonationDate = lastDonationDate?.toString(),
             latitude = latitude,
             longitude = longitude
         )
 
-        val response = authApiService.register(registerRequest)
-
-        if (response.isSuccessful) {
-            val registerResponse = response.body()
-
-            // Check if the API call was successful
-            if (registerResponse != null) {
+        // Use safe API call for consistent error handling
+        return when (val result = safeApiCall { authApiService.register(registerRequest) }) {
+            is ApiResult.Success -> {
+                val registerResponse = result.data
                 if (registerResponse.success && registerResponse.data?.accessToken != null) {
                     // Success - save auth token
-                    // Use phoneNumber from request if not provided in response
                     val authToken = AuthToken(
                         token = registerResponse.data.accessToken,
                         refreshToken = registerResponse.data.refreshToken,
@@ -152,26 +147,24 @@ class RestAuthRepository @Inject constructor(
                         phoneNumber = registerResponse.data.phoneNumber ?: phoneNumber.trim()
                     )
                     preferencesManager.saveAuthToken(authToken)
-                    Unit
+                    Result.success(Unit)
                 } else {
                     // API returned success=false or missing token
-                    throw Exception(registerResponse.message ?: "Registration failed")
+                    Result.failure(Exception(registerResponse.message ?: "Registration failed"))
                 }
-            } else {
-                throw Exception("Registration failed: No response received")
             }
-        } else {
-            // HTTP error - try to parse error body
-            val errorBody = response.errorBody()?.string()
-            val errorMessage = errorBody?.let {
-                try {
-                    val errorJson = JSONObject(it)
-                    errorJson.optString("message", "Unknown error")
-                } catch (e: Exception) {
-                    "Unknown error"
-                }
-            } ?: "Unknown error"
-            throw Exception("Registration failed: ${response.code()} - $errorMessage")
+            is ApiResult.Empty -> {
+                Result.failure(Exception("Registration failed: No response received"))
+            }
+            is ApiResult.Error -> {
+                val errorMessage = result.getUserMessage()
+                Result.failure(
+                    result.cause ?: ApiException(errorMessage, result.statusCode ?: 0)
+                )
+            }
+            is ApiResult.Loading -> {
+                Result.failure(Exception("Unexpected loading state"))
+            }
         }
     }
 

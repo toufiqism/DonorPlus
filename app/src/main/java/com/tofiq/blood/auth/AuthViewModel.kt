@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tofiq.blood.data.model.BloodGroup
 import com.tofiq.blood.data.model.UserRole
+import com.tofiq.blood.util.ExceptionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,7 +66,16 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
+     * Clear error message from UI state
+     * Called after showing error in Snackbar
+     */
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    /**
      * Login with phone number and password
+     * Handles various exceptions including network errors, authentication errors, etc.
      */
     fun loginWithPhone(onSuccess: () -> Unit) {
         val (phoneNumber, password) = _uiState.value.let { it.phoneNumber to it.password }
@@ -88,15 +98,16 @@ class AuthViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isLoggedIn = true)
                 onSuccess()
             }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.localizedMessage ?: "Login failed"
-                )
+                // Use ExceptionHandler to get user-friendly error message
+                val errorMessage = ExceptionHandler.getErrorMessage(e, "Login failed")
+                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
             }
         }
     }
 
     /**
      * Login with email and password (for backward compatibility)
+     * Handles various exceptions including network errors, authentication errors, etc.
      */
     fun login(onSuccess: () -> Unit) {
         val (email, password) = _uiState.value.let { it.email to it.password }
@@ -108,9 +119,9 @@ class AuthViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isLoggedIn = true)
                 onSuccess()
             }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.localizedMessage ?: "Login failed"
-                )
+                // Use ExceptionHandler to get user-friendly error message
+                val errorMessage = ExceptionHandler.getErrorMessage(e, "Login failed")
+                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
             }
         }
     }
@@ -162,6 +173,7 @@ class AuthViewModel @Inject constructor(
 
     /**
      * Register with email and password (for backward compatibility)
+     * Handles various exceptions including network errors, authentication errors, etc.
      */
     fun register(onSuccess: () -> Unit) {
         val (email, password) = _uiState.value.let { it.email to it.password }
@@ -173,9 +185,9 @@ class AuthViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isLoggedIn = true)
                 onSuccess()
             }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.localizedMessage ?: "Registration failed"
-                )
+                // Use ExceptionHandler to get user-friendly error message
+                val errorMessage = ExceptionHandler.getErrorMessage(e, "Registration failed")
+                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
             }
         }
     }
@@ -259,9 +271,9 @@ class AuthViewModel @Inject constructor(
                 // Navigate back to login screen
                 onSuccess()
             }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.localizedMessage ?: "Registration failed"
-                )
+                // Use ExceptionHandler to get user-friendly error message
+                val errorMessage = ExceptionHandler.getErrorMessage(e, "Registration failed")
+                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
             }
         }
     }

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization) // Required for Navigation 3 type-safe routes
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
@@ -57,6 +58,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -97,7 +100,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
-    //navigation
+    //navigation - Navigation 3 (new type-safe navigation library)
+    // Kotlin serialization for Navigation 3 type-safe routes
+    implementation(libs.kotlinx.serialization.json)
+    // Legacy navigation (kept for reference, can be removed)
     implementation(libs.androidx.navigation.compose)
 
     //coil
