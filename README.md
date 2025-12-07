@@ -57,7 +57,8 @@ Firebase authentication support is retained for backward compatibility. To switc
 - **OkHttp** - HTTP client with logging interceptor
 - **Gson** - JSON serialization/deserialization
 - **SharedPreferences** - Local storage for auth tokens and settings
-- **Firebase** (optional) - Alternative authentication backend
+- **Firebase** - Authentication backend and Cloud Messaging for push notifications
+- **Firebase Cloud Messaging (FCM)** - Push notification service
 - **Jetpack Compose** with Material Design 3
 - **Hilt** for Dependency Injection
 - **Room** for local database (prepared for future use)
@@ -119,6 +120,17 @@ These are declared via `libs.versions.toml` and `app/build.gradle.kts`.
   - `NetworkModule` - Provides Retrofit, OkHttp, and API services
   - `FirebaseModule` - Provides Firebase instances (optional)
 
+#### Push Notifications
+- `app/src/main/java/com/tofiq/blood/service/DonorPlusMessagingService.kt`: 
+  - Handles incoming Firebase Cloud Messaging (FCM) notifications
+  - Processes both notification and data payloads
+  - Displays notifications when app is in foreground
+  - Handles token refresh for device registration
+- `app/src/main/java/com/tofiq/blood/service/NotificationHelper.kt`:
+  - Utility class for creating and displaying notifications
+  - Manages notification channels for Android O+
+  - Handles notification intents and data payloads
+
 #### Navigation
 - `app/src/main/java/com/tofiq/blood/MainActivity.kt`: 
   - Navigation setup with routes: `login`, `register`, `settings`
@@ -159,13 +171,183 @@ These are declared via `libs.versions.toml` and `app/build.gradle.kts`.
 - **Card Slide**: Spring-based slide-up animation for form cards
 - All animations use Material motion principles for natural feel
 
+## Firebase Cloud Messaging (FCM)
+
+### Overview
+The app implements Firebase Cloud Messaging to receive push notifications for blood donation requests and updates. The implementation handles both notification and data payloads.
+
+### Features
+- **Notification Payloads**: Automatically displayed by system when app is in background
+- **Data Payloads**: Always received, even when app is in foreground
+- **Foreground Handling**: Custom notifications displayed when app is active
+- **Token Management**: Automatic FCM token generation and refresh
+- **Notification Channels**: Proper channel setup for Android O+
+
+### Message Types
+
+#### 1. Notification Payload
+When app is in background, system automatically displays the notification. When app is in foreground, the service handles it manually.
+
+```json
+{
+  "notification": {
+    "title": "Blood Request",
+    "body": "Urgent need for O+ blood in your area"
+  }
+}
+```
+
+#### 2. Data Payload
+Always received by the app, even in foreground. App must create and display the notification.
+
+```json
+{
+  "data": {
+    "title": "Blood Request",
+    "body": "Urgent need for O+ blood",
+    "requestId": "12345",
+    "location": "City Hospital"
+  }
+}
+```
+
+#### 3. Combined Payload
+Both notification and data can be sent together. System handles notification when in background, data always received.
+
+```json
+{
+  "notification": {
+    "title": "Blood Request",
+    "body": "Urgent need for O+ blood"
+  },
+  "data": {
+    "requestId": "12345",
+    "location": "City Hospital",
+    "bloodGroup": "O_POSITIVE"
+  }
+}
+```
+
+### Implementation Details
+
+#### Service Registration
+The `DonorPlusMessagingService` is registered in `AndroidManifest.xml` to handle FCM messages:
+
+```xml
+<service
+    android:name=".service.DonorPlusMessagingService"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+    </intent-filter>
+</service>
+```
+
+#### Permissions
+Required permissions are declared in `AndroidManifest.xml`:
+- `POST_NOTIFICATIONS` (Android 13+)
+- `VIBRATE` (for notification vibration)
+- `INTERNET` (for FCM communication)
+
+#### Notification Channel
+A notification channel "DonorPlus Notifications" is created automatically on app startup with:
+- High importance
+- Lights enabled
+- Vibration enabled
+
+### Getting FCM Token
+To get the FCM token for device registration:
+
+```kotlin
+FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+    if (task.isSuccessful) {
+        val token = task.result
+        // Send token to your server
+    }
+}
+```
+
+The token is also logged automatically in `onNewToken()` callback when it's refreshed.
+
+### Testing Notifications
+
+#### Using Firebase Console
+1. Go to Firebase Console → Cloud Messaging
+2. Click "Send test message"
+3. Enter FCM token from device logs
+4. Compose notification with title and body
+5. Add optional data payload
+6. Send message
+
+#### Using cURL
+```bash
+curl -X POST https://fcm.googleapis.com/v1/projects/YOUR_PROJECT_ID/messages:send \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {
+      "token": "DEVICE_FCM_TOKEN",
+      "notification": {
+        "title": "Test Notification",
+        "body": "This is a test message"
+      },
+      "data": {
+        "key1": "value1"
+      }
+    }
+  }'
+```
+
+### Notification Behavior
+
+#### App in Foreground
+- Both notification and data payloads are received by `onMessageReceived()`
+- App creates and displays custom notification
+- Data payload is available in notification intent extras
+
+#### App in Background
+- Notification payload: System automatically displays notification
+- Data payload: Received by `onMessageReceived()`, app displays custom notification
+- Combined: System displays notification, data also received
+
+#### App Terminated
+- Notification payload: System displays notification, app not invoked
+- Data payload: App is launched, `onMessageReceived()` is called
+- Combined: System displays notification, app launched with data
+
+### Customization
+
+#### Notification Icon
+Update the icon in `NotificationHelper.kt`:
+```kotlin
+.setSmallIcon(R.drawable.ic_launcher_foreground)
+```
+
+#### Notification Sound
+Default system notification sound is used. To customize:
+```kotlin
+val soundUri = Uri.parse("android.resource://${context.packageName}/${R.raw.notification_sound}")
+.setSound(soundUri)
+```
+
+#### Notification Actions
+Add action buttons to notifications:
+```kotlin
+.addAction(
+    R.drawable.ic_action,
+    "View",
+    pendingIntent
+)
+```
+
 ## Platform Support
 
 ### Android
-- Minimum SDK: As defined in `build.gradle.kts`
-- Target SDK: Latest stable
+- Minimum SDK: 29 (Android 10)
+- Target SDK: 36 (Android 15)
 - Supports all screen sizes (phone, tablet)
 - Light mode enforced for consistent branding
+- Notification support for Android 13+ (requires runtime permission)
 
 ### iOS Note
 This is an Android-only project. If you later create a Flutter version to support iOS:
@@ -415,6 +597,7 @@ When building new features, follow these principles:
 - ✅ ~~Implement REST API login with phone number~~ (Completed)
 - ✅ ~~Add configurable base URL settings~~ (Completed)
 - ✅ ~~Implement registration endpoint integration~~ (Completed)
+- ✅ ~~Implement Firebase Cloud Messaging for push notifications~~ (Completed)
 - Add phone number format validation with country code support
 - Add location picker with map integration for optional location sharing
 - Add password reset functionality via SMS/OTP

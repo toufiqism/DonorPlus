@@ -70,6 +70,9 @@ dependencies {
 
     // Add the dependencies for the Crashlytics NDK and Analytics libraries
     implementation(libs.firebase.analytics)
+    
+    // Firebase Cloud Messaging
+    implementation(libs.firebase.messaging.ktx)
 //    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
 
