@@ -52,13 +52,6 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
-     * Update email in UI state (for backward compatibility)
-     */
-    fun updateEmail(value: String) {
-        _uiState.value = _uiState.value.copy(email = value)
-    }
-
-    /**
      * Update password in UI state
      */
     fun updatePassword(value: String) {
@@ -71,6 +64,32 @@ class AuthViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    /**
+     * Clear login form fields
+     * Called when user navigates to login screen after logout
+     */
+    fun clearLoginForm() {
+        _uiState.value = _uiState.value.copy(
+            phoneNumber = "",
+            password = "",
+            errorMessage = null
+        )
+    }
+
+    /**
+     * Logout the current user
+     * Clears auth data from repository and sets isLoggedIn to false
+     */
+    fun logout() {
+        repository.signOut()
+        _uiState.value = _uiState.value.copy(
+            isLoggedIn = false,
+            phoneNumber = "",
+            password = "",
+            email = ""
+        )
     }
 
     /**
@@ -93,36 +112,22 @@ class AuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             val result = repository.loginWithPhonePassword(phoneNumber, password)
+            // Update UI state first
             _uiState.value = _uiState.value.copy(isLoading = false)
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoggedIn = true)
-                onSuccess()
-            }.onFailure { e ->
-                // Use ExceptionHandler to get user-friendly error message
-                val errorMessage = ExceptionHandler.getErrorMessage(e, "Login failed")
-                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
-            }
-        }
-    }
-
-    /**
-     * Login with email and password (for backward compatibility)
-     * Handles various exceptions including network errors, authentication errors, etc.
-     */
-    fun login(onSuccess: () -> Unit) {
-        val (email, password) = _uiState.value.let { it.email to it.password }
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-        viewModelScope.launch {
-            val result = repository.loginWithEmailPassword(email, password)
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoggedIn = true)
-                onSuccess()
-            }.onFailure { e ->
-                // Use ExceptionHandler to get user-friendly error message
-                val errorMessage = ExceptionHandler.getErrorMessage(e, "Login failed")
-                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
-            }
+            
+            result.fold(
+                onSuccess = {
+                    // Update logged in state and trigger navigation
+                    _uiState.value = _uiState.value.copy(isLoggedIn = true)
+                    // Call onSuccess callback - this runs on Main dispatcher since viewModelScope uses Dispatchers.Main
+                    onSuccess()
+                },
+                onFailure = { e ->
+                    // Use ExceptionHandler to get user-friendly error message
+                    val errorMessage = ExceptionHandler.getErrorMessage(e, "Login failed")
+                    _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
+                }
+            )
         }
     }
 
@@ -159,37 +164,6 @@ class AuthViewModel @Inject constructor(
      */
     fun updateLastDonationDate(value: LocalDate?) {
         _uiState.value = _uiState.value.copy(lastDonationDate = value)
-    }
-
-    /**
-     * Update location in UI state
-     */
-    fun updateLocation(latitude: Double?, longitude: Double?) {
-        _uiState.value = _uiState.value.copy(
-            latitude = latitude,
-            longitude = longitude
-        )
-    }
-
-    /**
-     * Register with email and password (for backward compatibility)
-     * Handles various exceptions including network errors, authentication errors, etc.
-     */
-    fun register(onSuccess: () -> Unit) {
-        val (email, password) = _uiState.value.let { it.email to it.password }
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-        viewModelScope.launch {
-            val result = repository.registerWithEmailPassword(email, password)
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoggedIn = true)
-                onSuccess()
-            }.onFailure { e ->
-                // Use ExceptionHandler to get user-friendly error message
-                val errorMessage = ExceptionHandler.getErrorMessage(e, "Registration failed")
-                _uiState.value = _uiState.value.copy(errorMessage = errorMessage)
-            }
-        }
     }
 
     /**

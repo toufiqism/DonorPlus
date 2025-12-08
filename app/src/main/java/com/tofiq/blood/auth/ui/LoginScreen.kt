@@ -83,17 +83,20 @@ fun LoginScreen(
     val screenState = remember { LoginScreenState() }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Clear form when user arrives at login screen (e.g., after logout)
+    // This ensures previous credentials are not shown
+    LaunchedEffect(Unit) {
+        viewModel.clearLoginForm()
+        delay(100)
+        screenState.startAnimation()
+    }
+
     // Show error message in Snackbar when errorMessage changes
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.clearError()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        delay(100)
-        screenState.startAnimation()
     }
 
     Scaffold(
@@ -130,7 +133,12 @@ fun LoginScreen(
                 passwordVisible = screenState.passwordVisible,
                 onTogglePasswordVisibility = screenState::togglePasswordVisibility,
                 isLoading = uiState.isLoading,
-                onLoginClick = { viewModel.loginWithPhone(onLoggedIn) },
+                onLoginClick = { 
+                    viewModel.loginWithPhone { 
+                        // Explicitly call onLoggedIn when login succeeds
+                        onLoggedIn() 
+                    } 
+                },
                 onRegisterClick = onRegisterClick
             )
 

@@ -55,9 +55,12 @@ private val bottomNavItems = listOf(
 
 /**
  * Main dashboard screen with bottom navigation and swipe navigation
+ * 
+ * @param onLogout Callback invoked when user logs out from profile screen
  */
 @Composable
 fun DashboardScreen(
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -74,6 +77,7 @@ fun DashboardScreen(
     ) { innerPadding ->
         DashboardPager(
             pagerState = pagerState,
+            onLogout = onLogout,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -127,6 +131,7 @@ private fun DashboardBottomBar(
 @Composable
 private fun DashboardPager(
     pagerState: PagerState,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     HorizontalPager(
@@ -138,7 +143,7 @@ private fun DashboardPager(
         when (page) {
             0 -> HomeScreen()
             1 -> SearchScreen()
-            2 -> ProfileScreen()
+            2 -> ProfileScreen(onLogout = onLogout)
         }
     }
 }

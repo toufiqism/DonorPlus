@@ -34,6 +34,7 @@ interface AuthRepository {
         latitude: Double? = null,
         longitude: Double? = null
     ): Result<Unit>
+
     fun isLoggedIn(): Boolean
     fun signOut()
 }
@@ -52,20 +53,23 @@ class RestAuthRepository @Inject constructor(
      * Login with phone number and password using REST API.
      * Uses safeApiCall for consistent error handling.
      */
-    override suspend fun loginWithPhonePassword(phoneNumber: String, password: String): Result<Unit> {
+    override suspend fun loginWithPhonePassword(
+        phoneNumber: String,
+        password: String
+    ): Result<Unit> {
         val loginRequest = LoginRequest(
             phoneNumber = phoneNumber.trim(),
             password = password
         )
-        
+
         // Use safe API call for consistent error handling
         return when (val result = safeApiCall { authApiService.login(loginRequest) }) {
             is ApiResult.Success -> {
                 val loginResponse = result.data
-                if (loginResponse.success && loginResponse.data?.token != null) {
+                if (loginResponse.success && loginResponse.data?.refreshToken != null) {
                     // Success - save auth token
                     val authToken = AuthToken(
-                        token = loginResponse.data.token,
+                        token = loginResponse.data.token ?: "",
                         refreshToken = loginResponse.data.refreshToken,
                         userId = loginResponse.data.userId,
                         phoneNumber = loginResponse.data.phoneNumber
@@ -77,15 +81,18 @@ class RestAuthRepository @Inject constructor(
                     Result.failure(Exception(loginResponse.message ?: "Login failed"))
                 }
             }
+
             is ApiResult.Empty -> {
                 Result.failure(Exception("Login failed: No response received"))
             }
+
             is ApiResult.Error -> {
                 val errorMessage = result.getUserMessage()
                 Result.failure(
                     result.cause ?: ApiException(errorMessage, result.statusCode ?: 0)
                 )
             }
+
             is ApiResult.Loading -> {
                 // Should not happen with safeApiCall
                 Result.failure(Exception("Unexpected loading state"))
@@ -153,15 +160,18 @@ class RestAuthRepository @Inject constructor(
                     Result.failure(Exception(registerResponse.message ?: "Registration failed"))
                 }
             }
+
             is ApiResult.Empty -> {
                 Result.failure(Exception("Registration failed: No response received"))
             }
+
             is ApiResult.Error -> {
                 val errorMessage = result.getUserMessage()
                 Result.failure(
                     result.cause ?: ApiException(errorMessage, result.statusCode ?: 0)
                 )
             }
+
             is ApiResult.Loading -> {
                 Result.failure(Exception("Unexpected loading state"))
             }
@@ -189,7 +199,10 @@ class FirebaseAuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
 
-    override suspend fun loginWithPhonePassword(phoneNumber: String, password: String): Result<Unit> =
+    override suspend fun loginWithPhonePassword(
+        phoneNumber: String,
+        password: String
+    ): Result<Unit> =
         Result.failure(UnsupportedOperationException("Phone login not supported with Firebase"))
 
     override suspend fun loginWithEmailPassword(email: String, password: String): Result<Unit> =

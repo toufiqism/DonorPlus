@@ -1,10 +1,14 @@
 package com.tofiq.blood.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 
 import com.tofiq.blood.auth.ui.LoginScreen
@@ -17,27 +21,27 @@ import kotlinx.serialization.Serializable
  * ============================================================================
  * NAVIGATION 3 IMPLEMENTATION
  * ============================================================================
- * 
+ *
  * Navigation 3 is a new Jetpack navigation library that provides:
- * 
+ *
  * 1. TYPE-SAFE ROUTES: Routes are defined as data classes/objects with @Serializable
  *    annotation, eliminating string-based route matching and providing compile-time safety.
- * 
+ *
  * 2. BACK STACK MANAGEMENT: Uses rememberNavBackStack() to manage navigation state.
  *    The back stack is a mutable list of NavKey objects that you can manipulate directly.
- * 
+ *
  * 3. ENTRY PROVIDER: Maps NavKey types to their corresponding composable content.
  *    Uses entryProvider { } DSL with entry<RouteType> { } blocks.
- * 
+ *
  * 4. NAV DISPLAY: Renders the current back stack entry. It observes the back stack
  *    and automatically displays the appropriate content.
- * 
+ *
  * KEY DIFFERENCES FROM NAVIGATION COMPOSE:
  * - No NavController - use back stack directly
  * - No NavHost - use NavDisplay instead
  * - No string routes - use typed NavKey classes
  * - No composable() DSL - use entry<T> { } instead
- * 
+ *
  * NAVIGATION OPERATIONS:
  * - Navigate forward: backStack.add(RouteObject)
  * - Navigate back: backStack.removeLastOrNull()
@@ -84,7 +88,7 @@ data object DashboardRoute : NavKey
 
 /**
  * Main navigation composable using Navigation 3.
- * 
+ *
  * This function sets up the entire navigation graph for the app using
  * the new Navigation 3 library's declarative approach.
  */
@@ -106,7 +110,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     // The 'key' parameter in each entry block is the actual route instance,
     // which can contain arguments for data classes.
     val entryProvider = entryProvider<NavKey> {
-        
+
         // --------------------------------------------------------------------
         // LOGIN SCREEN ENTRY
         // --------------------------------------------------------------------
@@ -115,18 +119,23 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         entry<LoginRoute> {
             LoginScreen(
                 // Navigate to register: add RegisterRoute to back stack
-                onRegisterClick = { 
-                    backStack.add(RegisterRoute) 
+                onRegisterClick = {
+                    Log.d("AppNavigation", "Navigating to Register")
+                    backStack.add(RegisterRoute)
                 },
                 // Navigate to dashboard after login: clear stack and add dashboard
                 // This prevents user from going back to login after successful auth
                 onLoggedIn = {
+                    Log.d("AppNavigation", "Login successful - navigating to Dashboard")
+                    Log.d("AppNavigation", "Current backStack size before: ${backStack.size}")
                     backStack.clear()
                     backStack.add(DashboardRoute)
+                    Log.d("AppNavigation", "Current backStack size after: ${backStack.size}")
                 },
                 // Navigate to settings: add SettingsRoute to back stack
-                onSettingsClick = { 
-                    backStack.add(SettingsRoute) 
+                onSettingsClick = {
+                    Log.d("AppNavigation", "Navigating to Settings")
+                    backStack.add(SettingsRoute)
                 }
             )
         }
@@ -137,8 +146,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         entry<RegisterRoute> {
             RegisterScreen(
                 // Go back to login: remove current entry from back stack
-                onLoginClick = { 
-                    backStack.removeLastOrNull() 
+                onLoginClick = {
+                    backStack.removeLastOrNull()
                 },
                 // After registration: clear stack and go to login
                 // User needs to login with their new credentials
@@ -155,8 +164,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         entry<SettingsRoute> {
             SettingsScreen(
                 // Go back: remove current entry from back stack
-                onNavigateBack = { 
-                    backStack.removeLastOrNull() 
+                onNavigateBack = {
+                    backStack.removeLastOrNull()
                 }
             )
         }
@@ -165,7 +174,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         // DASHBOARD SCREEN ENTRY
         // --------------------------------------------------------------------
         entry<DashboardRoute> {
-            DashboardScreen()
+            DashboardScreen(
+                // Handle logout: clear back stack and navigate to login
+                onLogout = {
+                    Log.d("AppNavigation", "Logout - navigating to Login")
+                    backStack.clear()
+                    backStack.add(LoginRoute)
+                }
+            )
         }
     }
 
@@ -187,6 +203,22 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     NavDisplay(
         backStack = backStack,
         entryProvider = entryProvider,
-        modifier = modifier
+        modifier = modifier,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            CustomNavEntryDecorator(),
+        )
     )
 }
+
+// import androidx.navigation3.runtime.NavEntryDecorator
+class CustomNavEntryDecorator<T : Any> : NavEntryDecorator<T>(
+    decorate = { entry ->
+        Log.d(
+            "CustomNavEntryDecorator",
+            "entry with ${entry.contentKey} entered composition and was decorated"
+        )
+        entry.Content()
+    },
+    onPop = { contentKey -> Log.d("CustomNavEntryDecorator", "entry with $contentKey was popped") }
+)

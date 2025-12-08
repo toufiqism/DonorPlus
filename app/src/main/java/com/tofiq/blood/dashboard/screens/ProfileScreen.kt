@@ -22,11 +22,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.tofiq.blood.dashboard.components.ProfileHeader
 import com.tofiq.blood.dashboard.components.ProfileInfoData
 import com.tofiq.blood.dashboard.components.ProfileInfoItem
 import com.tofiq.blood.dashboard.components.SettingsItem
 import com.tofiq.blood.dashboard.components.SettingsItemData
+import com.tofiq.blood.dashboard.viewmodel.ProfileViewModel
 import com.tofiq.blood.ui.components.DonorPlusCard
 import com.tofiq.blood.ui.components.DonorPlusOutlinedButton
 import com.tofiq.blood.ui.components.DonorPlusSectionHeader
@@ -69,10 +71,15 @@ fun rememberProfileScreenState(): ProfileScreenState {
 
 /**
  * Profile screen - User profile and settings
+ * 
+ * @param onLogout Callback invoked when user logs out, navigates to login screen
+ * @param viewModel ProfileViewModel for handling logout logic
  */
 @Composable
 fun ProfileScreen(
-    modifier: Modifier = Modifier
+    onLogout: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state = rememberProfileScreenState()
     
@@ -90,7 +97,12 @@ fun ProfileScreen(
             
             ProfilePersonalInfoSection(state)
             ProfileSettingsSection(state)
-            ProfileLogoutSection(onLogoutClick = state::showFeatureToast)
+            ProfileLogoutSection(
+                onLogoutClick = {
+                    // Sign out from repository and then navigate to login
+                    viewModel.logout(onLogout)
+                }
+            )
         }
     }
 }
