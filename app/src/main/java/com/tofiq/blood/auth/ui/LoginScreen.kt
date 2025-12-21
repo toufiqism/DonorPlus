@@ -1,34 +1,19 @@
 package com.tofiq.blood.auth.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,8 +21,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,28 +28,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tofiq.blood.auth.AuthViewModel
+import com.tofiq.blood.auth.ui.components.AuthAnimatedCard
 import com.tofiq.blood.auth.ui.components.AuthButton
+import com.tofiq.blood.auth.ui.components.AuthFooter
 import com.tofiq.blood.auth.ui.components.AuthHeader
 import com.tofiq.blood.auth.ui.components.AuthLogo
 import com.tofiq.blood.auth.ui.components.LoginScreenState
 import com.tofiq.blood.auth.ui.components.PasswordField
 import com.tofiq.blood.auth.ui.components.PhoneNumberField
+import com.tofiq.blood.ui.components.DonorPlusGradientBackground
 import com.tofiq.blood.ui.theme.AccentCoral
-import com.tofiq.blood.ui.theme.GradientEnd
-import com.tofiq.blood.ui.theme.GradientMiddle
-import com.tofiq.blood.ui.theme.GradientStart
 import com.tofiq.blood.ui.theme.PrimaryRed
 import com.tofiq.blood.ui.theme.SecondaryBlue
-import com.tofiq.blood.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 
 /**
@@ -112,42 +89,35 @@ fun LoginScreen(
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(GradientStart, GradientMiddle, GradientEnd),
-                        start = Offset(0f, 0f),
-                        end = Offset(1000f, 1000f)
-                    )
-                )
+        DonorPlusGradientBackground(
+            modifier = Modifier.padding(paddingValues)
         ) {
-            LoginContent(
-                animateContent = screenState.animateContent,
-                phoneNumber = uiState.phoneNumber,
-                onPhoneNumberChange = viewModel::updatePhoneNumber,
-                password = uiState.password,
-                onPasswordChange = viewModel::updatePassword,
-                passwordVisible = screenState.passwordVisible,
-                onTogglePasswordVisibility = screenState::togglePasswordVisibility,
-                isLoading = uiState.isLoading,
-                onLoginClick = { 
-                    viewModel.loginWithPhone { 
-                        // Explicitly call onLoggedIn when login succeeds
-                        onLoggedIn() 
-                    } 
-                },
-                onRegisterClick = onRegisterClick
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                LoginContent(
+                    animateContent = screenState.animateContent,
+                    phoneNumber = uiState.phoneNumber,
+                    onPhoneNumberChange = viewModel::updatePhoneNumber,
+                    password = uiState.password,
+                    onPasswordChange = viewModel::updatePassword,
+                    passwordVisible = screenState.passwordVisible,
+                    onTogglePasswordVisibility = screenState::togglePasswordVisibility,
+                    isLoading = uiState.isLoading,
+                    onLoginClick = { 
+                        viewModel.loginWithPhone { 
+                            // Explicitly call onLoggedIn when login succeeds
+                            onLoggedIn() 
+                        } 
+                    },
+                    onRegisterClick = onRegisterClick
+                )
 
-            SettingsButton(
-                onClick = onSettingsClick,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-            )
+                SettingsButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
@@ -242,36 +212,17 @@ private fun LoginCard(
     isLoading: Boolean,
     onLoginClick: () -> Unit
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
-        ) + fadeIn(),
-        exit = slideOutVertically() + fadeOut()
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(16.dp, RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            LoginCardContent(
-                phoneNumber = phoneNumber,
-                onPhoneNumberChange = onPhoneNumberChange,
-                password = password,
-                onPasswordChange = onPasswordChange,
-                passwordVisible = passwordVisible,
-                onTogglePasswordVisibility = onTogglePasswordVisibility,
-                isLoading = isLoading,
-                onLoginClick = onLoginClick
-            )
-        }
+    AuthAnimatedCard(visible = visible) {
+        LoginCardContent(
+            phoneNumber = phoneNumber,
+            onPhoneNumberChange = onPhoneNumberChange,
+            password = password,
+            onPasswordChange = onPasswordChange,
+            passwordVisible = passwordVisible,
+            onTogglePasswordVisibility = onTogglePasswordVisibility,
+            isLoading = isLoading,
+            onLoginClick = onLoginClick
+        )
     }
 }
 
@@ -322,31 +273,11 @@ private fun LoginFooter(
     animate: Boolean,
     onRegisterClick: () -> Unit
 ) {
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (animate) 1f else 0f,
-        animationSpec = tween(durationMillis = 800),
-        label = "footerAlpha"
+    AuthFooter(
+        promptText = "Don't have an account?",
+        actionText = "Sign Up",
+        onActionClick = onRegisterClick,
+        actionColor = SecondaryBlue,
+        animate = animate
     )
-
-    Row(
-        modifier = Modifier.alpha(contentAlpha),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Don't have an account?",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        TextButton(
-            onClick = onRegisterClick,
-            colors = ButtonDefaults.textButtonColors(contentColor = SecondaryBlue)
-        ) {
-            Text(
-                text = "Sign Up",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
 }

@@ -1,17 +1,25 @@
 package com.tofiq.blood.auth.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,14 +32,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +71,49 @@ import com.tofiq.blood.ui.theme.AccentCoral
 import com.tofiq.blood.ui.theme.PrimaryRed
 import com.tofiq.blood.ui.theme.SecondaryBlue
 import com.tofiq.blood.ui.theme.TextSecondary
+
+// ============== Animation Specs ==============
+
+/**
+ * Common animation specifications for consistent animations across auth screens
+ */
+object AuthAnimationSpecs {
+    val logoScaleSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+
+    val logoRotationTween = tween<Float>(durationMillis = 1000)
+
+    val contentAlphaTween = tween<Float>(durationMillis = 800)
+
+}
+
+// ============== Common Text Field Colors ==============
+
+/**
+ * Standard outlined text field colors used across auth forms
+ */
+@Composable
+fun authOutlinedTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = SecondaryBlue,
+    unfocusedBorderColor = Color(0xFFE0E0E0),
+    focusedLabelColor = SecondaryBlue,
+    disabledBorderColor = Color(0xFFE0E0E0),
+    disabledTextColor = Color.Black,
+    disabledLabelColor = SecondaryBlue
+)
+
+// ============== Dropdown Data Classes ==============
+
+/**
+ * Immutable data class for dropdown items
+ */
+@Immutable
+data class DropdownItem<T>(
+    val value: T,
+    val displayText: String
+)
 
 // ============== Stable State Holders ==============
 
@@ -368,17 +427,247 @@ fun AuthTextField(
         },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = SecondaryBlue,
-            unfocusedBorderColor = Color(0xFFE0E0E0),
-            focusedLabelColor = SecondaryBlue,
-            disabledBorderColor = Color(0xFFE0E0E0),
-            disabledTextColor = Color.Black,
-            disabledLabelColor = SecondaryBlue
-        ),
+        colors = authOutlinedTextFieldColors(),
         singleLine = true,
         enabled = enabled,
         readOnly = readOnly,
         placeholder = placeholder?.let { { Text(it) } }
     )
+}
+
+// ============== Auth Footer ==============
+
+/**
+ * Reusable auth footer with animation for Login/Register screens
+ * @param promptText Text before the action button (e.g., "Don\'t have an account?")
+ * @param actionText Text on the action button (e.g., "Sign Up")
+ * @param onActionClick Callback when action button is clicked
+ * @param actionColor Color of the action button text
+ * @param animate Whether to animate the footer
+ */
+@Composable
+fun AuthFooter(
+    promptText: String,
+    actionText: String,
+    onActionClick: () -> Unit,
+    actionColor: Color,
+    animate: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (animate) 1f else 0f,
+        animationSpec = AuthAnimationSpecs.contentAlphaTween,
+        label = "footerAlpha"
+    )
+
+    Row(
+        modifier = modifier.alpha(contentAlpha),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = promptText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        TextButton(
+            onClick = onActionClick,
+            colors = ButtonDefaults.textButtonColors(contentColor = actionColor)
+        ) {
+            Text(
+                text = actionText,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+// ============== Generic Select Dropdown ==============
+
+/**
+ * Reusable dropdown select component
+ * @param selectedValue Currently selected value (null if none selected)
+ * @param items List of dropdown items
+ * @param onItemSelected Callback when an item is selected
+ * @param expanded Whether the dropdown is expanded
+ * @param onExpandedChange Callback when expanded state changes
+ * @param label Label text for the field
+ * @param leadingIcon Optional leading icon
+ * @param leadingIconTint Tint color for the leading icon
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> SelectDropdown(
+    selectedValue: T?,
+    items: List<DropdownItem<T>>,
+    onItemSelected: (T) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: ImageVector? = null,
+    leadingIconTint: Color = SecondaryBlue,
+    placeholder: String? = null
+) {
+    val displayText = items.find { it.value == selectedValue }?.displayText ?: ""
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { onExpandedChange(!expanded) },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            leadingIcon = leadingIcon?.let {
+                {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = label,
+                        tint = leadingIconTint
+                    )
+                }
+            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(12.dp),
+            colors = authOutlinedTextFieldColors(),
+            placeholder = placeholder?.let { { Text(it) } }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) }
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item.displayText) },
+                    onClick = {
+                        onItemSelected(item.value)
+                        onExpandedChange(false)
+                    }
+                )
+            }
+        }
+    }
+}
+
+// ============== Animated Auth Card ==============
+
+/**
+ * Animated card container with slide-in animation for auth screens
+ */
+@Composable
+fun AuthAnimatedCard(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        ) + fadeIn(),
+        exit = slideOutVertically() + fadeOut()
+    ) {
+        Card(
+            modifier = modifier
+                .fillMaxWidth()
+                .shadow(16.dp, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+// ============== Terms Checkbox ==============
+
+/**
+ * Reusable terms and conditions checkbox
+ */
+@Composable
+fun TermsCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    checkboxColor: Color = SecondaryBlue
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "I agree to the terms and conditions *",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onCheckedChange(!checked) }
+        )
+    }
+}
+
+// ============== Date Picker Field ==============
+
+/**
+ * Clickable date picker field for auth forms
+ */
+@Composable
+fun DatePickerField(
+    value: String,
+    onClick: () -> Unit,
+    label: String,
+    leadingIcon: ImageVector,
+    modifier: Modifier = Modifier,
+    placeholder: String = "Select date"
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            enabled = false,
+            label = { Text(label) },
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = label,
+                    tint = SecondaryBlue
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = "Pick Date",
+                    tint = SecondaryBlue
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = authOutlinedTextFieldColors(),
+            placeholder = { Text(placeholder) }
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clickable(onClick = onClick)
+        )
+    }
 }

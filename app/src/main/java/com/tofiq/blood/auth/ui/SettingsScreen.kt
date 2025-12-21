@@ -3,7 +3,6 @@ package com.tofiq.blood.auth.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,19 +19,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,19 +36,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tofiq.blood.auth.SettingsViewModel
+import com.tofiq.blood.auth.ui.components.authOutlinedTextFieldColors
+import com.tofiq.blood.ui.components.DonorPlusCard
+import com.tofiq.blood.ui.components.DonorPlusErrorMessage
+import com.tofiq.blood.ui.components.DonorPlusGradientBackground
+import com.tofiq.blood.ui.components.DonorPlusHeader
+import com.tofiq.blood.ui.components.DonorPlusInfoMessage
+import com.tofiq.blood.ui.components.DonorPlusSecondaryButton
+import com.tofiq.blood.ui.components.DonorPlusSpacing
+import com.tofiq.blood.ui.components.DonorPlusSuccessMessage
+import com.tofiq.blood.ui.components.DonorPlusTextField
+import com.tofiq.blood.ui.components.DonorPlusTextButton
 import com.tofiq.blood.ui.theme.AccentCoral
-import com.tofiq.blood.ui.theme.GradientEnd
-import com.tofiq.blood.ui.theme.GradientMiddle
-import com.tofiq.blood.ui.theme.GradientStart
 import com.tofiq.blood.ui.theme.PrimaryRed
 import com.tofiq.blood.ui.theme.SecondaryBlue
 import com.tofiq.blood.ui.theme.TextSecondary
@@ -135,40 +134,40 @@ private fun SettingsContent(
     errorMessage: String?,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(GradientStart, GradientMiddle, GradientEnd),
-                    start = Offset(0f, 0f),
-                    end = Offset(1000f, 1000f)
-                )
+    DonorPlusGradientBackground(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(DonorPlusSpacing.L)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            SettingsIcon()
+            
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.L))
+            
+            DonorPlusHeader(
+                title = "API Configuration",
+                subtitle = "Configure the backend server URL",
+                titleColor = PrimaryRed,
+                animate = false
             )
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        SettingsIcon()
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        SettingsHeader()
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        SettingsCard(
-            baseUrl = baseUrl,
-            onBaseUrlChange = onBaseUrlChange,
-            onSave = onSave,
-            onReset = onReset,
-            isSaved = isSaved,
-            errorMessage = errorMessage
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        SettingsInfoCard()
+            
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.XL))
+            
+            SettingsCard(
+                baseUrl = baseUrl,
+                onBaseUrlChange = onBaseUrlChange,
+                onSave = onSave,
+                onReset = onReset,
+                isSaved = isSaved,
+                errorMessage = errorMessage
+            )
+            
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.L))
+            
+            SettingsInfoCard()
+        }
     }
 }
 
@@ -193,27 +192,6 @@ private fun SettingsIcon() {
 }
 
 @Composable
-private fun SettingsHeader() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = "API Configuration",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = PrimaryRed
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Configure the backend server URL",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
 private fun SettingsCard(
     baseUrl: String,
     onBaseUrlChange: (String) -> Unit,
@@ -222,17 +200,11 @@ private fun SettingsCard(
     isSaved: Boolean,
     errorMessage: String?
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(16.dp, RoundedCornerShape(24.dp)),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
+    DonorPlusCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(DonorPlusSpacing.L),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             BaseUrlField(
@@ -240,19 +212,27 @@ private fun SettingsCard(
                 onValueChange = onBaseUrlChange
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.L))
             
-            SaveButton(onClick = onSave)
+            DonorPlusSecondaryButton(
+                onClick = onSave,
+                text = "Save Configuration",
+                icon = Icons.Default.Check
+            )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(DonorPlusSpacing.S))
             
-            ResetButton(onClick = onReset)
+            DonorPlusTextButton(
+                onClick = onReset,
+                text = "Reset to Default",
+                color = PrimaryRed
+            )
             
             SuccessMessage(visible = isSaved)
             
             errorMessage?.let { msg ->
-                Spacer(modifier = Modifier.height(16.dp))
-                ErrorMessage(message = msg)
+                Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+                DonorPlusErrorMessage(message = msg)
             }
         }
     }
@@ -263,71 +243,18 @@ private fun BaseUrlField(
     value: String,
     onValueChange: (String) -> Unit
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text("Base URL") },
-        placeholder = { Text("http://192.168.103.177:8080") },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = SecondaryBlue,
-            unfocusedBorderColor = Color(0xFFE0E0E0),
-            focusedLabelColor = SecondaryBlue
-        ),
-        singleLine = true,
-        supportingText = {
-            Text(
-                text = "Format: http://ip:port or https://domain.com",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
-        }
-    )
-}
-
-@Composable
-private fun SaveButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .shadow(8.dp, RoundedCornerShape(28.dp)),
-        shape = RoundedCornerShape(28.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = SecondaryBlue)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Check,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
+    Column {
+        DonorPlusTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = "Base URL"
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.XS))
         Text(
-            text = "Save Configuration",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
-        )
-    }
-}
-
-@Composable
-private fun ResetButton(onClick: () -> Unit) {
-    TextButton(
-        onClick = onClick,
-        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryRed)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Refresh,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = "Reset to Default",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            text = "Format: http://ip:port or https://domain.com",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+            modifier = Modifier.padding(start = DonorPlusSpacing.M)
         )
     }
 }
@@ -339,81 +266,20 @@ private fun SuccessMessage(visible: Boolean) {
         enter = fadeIn(),
         exit = fadeOut()
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
-            )
-        ) {
-            Text(
-                text = "✓ Configuration saved successfully",
-                color = Color(0xFF2E7D32),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorMessage(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
-        )
-    ) {
-        Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            textAlign = TextAlign.Center
-        )
+        Spacer(modifier = Modifier.height(DonorPlusSpacing.M))
+        DonorPlusSuccessMessage(message = "✓ Configuration saved successfully")
     }
 }
 
 @Composable
 private fun SettingsInfoCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = AccentCoral.copy(alpha = 0.1f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "ℹ️ Information",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = PrimaryRed
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "• The base URL should point to your backend server\n" +
-                        "• Include the protocol (http:// or https://)\n" +
-                        "• Include the port number if required\n" +
-                        "• Changes take effect immediately",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
-        }
-    }
+    DonorPlusInfoMessage(
+        message = "ℹ️ Information\n\n" +
+                "• The base URL should point to your backend server\n" +
+                "• Include the protocol (http:// or https://)\n" +
+                "• Include the port number if required\n" +
+                "• Changes take effect immediately",
+        backgroundColor = AccentCoral.copy(alpha = 0.1f),
+        textColor = TextSecondary
+    )
 }

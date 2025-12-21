@@ -516,6 +516,30 @@ Content-Type: application/json
 - **Null Safety**: Comprehensive null checking throughout
 - **Clean Architecture**: Clear separation between data, domain, and presentation layers
 
+### Composition Optimization
+The codebase follows Jetpack Compose best practices for optimal recomposition:
+
+1. **Extracted Reusable Components**:
+   - `AuthFooter` - Common footer pattern used in Login/Register screens
+   - `SelectDropdown<T>` - Generic dropdown replacing duplicate Role/BloodGroup dropdowns
+   - `AuthAnimatedCard` - Animated card container with standardized animations
+   - `TermsCheckbox`, `DatePickerField` - Extracted form components
+
+2. **Centralized Animation Specs**:
+   - `AuthAnimationSpecs` object contains all animation configurations
+   - Consistent spring/tween animations across auth screens
+   - Prevents animation spec recreation on recomposition
+
+3. **Stable State Holders**:
+   - `@Stable` annotated state classes prevent unnecessary recompositions
+   - `@Immutable` data classes for list items and static data
+   - Dropdown items defined outside composables for stability
+
+4. **Design System Components**:
+   - `DonorPlusGradientBackground` - Reusable gradient background
+   - Standardized text field colors via `authOutlinedTextFieldColors()`
+   - Centralized spacing values via `DonorPlusSpacing` object
+
 ## Design System
 
 ### Component Library
@@ -554,6 +578,10 @@ fun MyScreen() {
 ```
 
 ### Available Components
+
+#### General UI Components
+**Location**: `app/src/main/java/com/tofiq/blood/ui/components/DonorPlusComponents.kt`
+
 - **Backgrounds**: `DonorPlusGradientBackground`, `DonorPlusSolidBackground`
 - **Buttons**: `DonorPlusPrimaryButton`, `DonorPlusSecondaryButton`, `DonorPlusOutlinedButton`, `DonorPlusTextButton`
 - **Cards**: `DonorPlusCard`, `DonorPlusAnimatedCard`
@@ -561,6 +589,46 @@ fun MyScreen() {
 - **Fields**: `DonorPlusTextField`
 - **Messages**: `DonorPlusErrorMessage`, `DonorPlusInfoMessage`, `DonorPlusSuccessMessage`
 - **Other**: `DonorPlusAnimatedLogo`, `DonorPlusLoadingIndicator`, `DonorPlusContentContainer`
+
+#### Auth Components
+**Location**: `app/src/main/java/com/tofiq/blood/auth/ui/components/AuthComponents.kt`
+
+These components are optimized for authentication screens with consistent animations and styling:
+
+- **State Holders**:
+  - `LoginScreenState` - Manages login screen UI state (password visibility, animations)
+  - `RegisterScreenState` - Manages registration screen UI state with dropdown menus
+  
+- **Animation Specs**:
+  - `AuthAnimationSpecs` - Centralized animation configurations for consistent auth screen animations
+  - `authOutlinedTextFieldColors()` - Standard text field colors for auth forms
+  
+- **Form Components**:
+  - `AuthLogo` - Animated heart logo with scale and rotation effects
+  - `AuthHeader` - Animated header with title and subtitle
+  - `AuthFooter` - Reusable footer with prompt text and action button (e.g., "Don't have an account? Sign Up")
+  - `AuthButton` - Primary action button with loading state
+  - `AuthAnimatedCard` - Card container with slide-in animation
+  - `AuthTextField` - Generic text field with leading icon
+  - `PhoneNumberField` - Phone number input with validation
+  - `PasswordField` - Password input with visibility toggle
+  - `SelectDropdown<T>` - Generic dropdown component for any enum/list (used for Role, Blood Group)
+  - `TermsCheckbox` - Styled terms and conditions checkbox
+  - `DatePickerField` - Clickable date picker field
+  - `AuthErrorMessage` - Error message display card
+  
+- **Data Classes**:
+  - `DropdownItem<T>` - Generic data class for dropdown items
+
+#### Dashboard Components
+**Location**: `app/src/main/java/com/tofiq/blood/dashboard/components/DashboardComponents.kt`
+
+- **Data Classes**: `StatData`, `ActivityData`, `DonationCenterData`, `ProfileInfoData`, `SettingsItemData`
+- **Stats**: `StatCard`, `StatsRow`
+- **Cards**: `ActivityCard`, `DonationCenterCard`, `WelcomeCard`
+- **Profile**: `ProfileHeader`, `ProfileInfoItem`
+- **Settings**: `SettingsItem`
+- **Utility**: `IconTextRow`
 
 ### Documentation
 - **Quick Start**: See `DESIGN_SYSTEM_QUICK_START.md` for immediate usage
